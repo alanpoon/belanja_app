@@ -4,7 +4,8 @@ import * as zoom from "d3-zoom";
 import * as array from "d3-array";
 import {format} from "d3-format";
 import * as shape from 'd3-shape';
-import React,{Tooltip,Text} from 'react';
+import React from 'react';
+import { Text, StyleSheet } from 'react-native';
 import Svg, {G, Defs,Stop,Pattern,RadialGradient,Rect,Circle,Path} from "react-native-svg";
 const d3 = {
   scale,
@@ -55,18 +56,16 @@ class Heatmap extends Layer{
     var width =this.width;
     var height = this.height;
     return (
-      <G id="heatmap">
+      <G id="heatmap" key="heatmap">
         <Rect style={{opacity:0,fill:'rgb(0,0,255)'}} pointer-events="all" x="0" y="0" width={width} height={height}></Rect>
-        {data.map.forEach(function(element) {
+        {data.map.forEach(function(element,index) {
             if (! element.points){
-              return (<Rect style={{opacity: 0.6}} x={x(element.x)} y={y(element.y)} height={Math.abs(y(data.binSize) - y(0))} width={Math.abs(x(data.binSize) -x(0))}>
-                <Text></Text>
+              return (<Rect key={index} style={{opacity: 0.6}} x={x(element.x)} y={y(element.y)} height={Math.abs(y(data.binSize) - y(0))} width={Math.abs(x(data.binSize) -x(0))}>
+                <Text>Hi</Text>
               </Rect>);
             }else{
-              return(<Path vector-effect="non-scaling-stroke" pointer-events="all" d={line(element.points) + "Z"} style={{cursor: "move"}} fill={element.color}>
-                <Tooltip>
+              return(<Path key={index} vector-effect="non-scaling-stroke" pointer-events="all" d={line(element.points) + "Z"} style={{cursor: "move"}} fill={element.color}>
                   <Text>Hi</Text>
-                </Tooltip>
               </Path>);
             }
         }
