@@ -17,11 +17,11 @@ type Props={
 class Floorplan extends PureComponent <Props>{
   constructor(props){
     super(props)
-    this.layers=[new Heatmap()];
     this.panZoomEnabled=true;
     this.maxZoom=5;
-    this.xScale = d3.scale.scaleLinear();
-    this.yScale = d3.scale.scaleLinear();
+    this.xScale = d3.scale.scaleLinear().domain([0,50.0]).range([0,500]);
+    this.yScale = d3.scale.scaleLinear().domain([0,33.79]).range([0,380]);
+    this.layers=[new Heatmap().xScale(this.xScale).yScale(this.yScale)];
   }
   render(){
     var width = this.xScale.range()[1] - this.xScale.range()[0],

@@ -17,7 +17,12 @@ const d3 = {
 };
 
 import Layer from './Layer';
-
+const styles = StyleSheet.create({
+  red: {
+    //color: '#D73027',
+    opacity: 0.6
+  },
+});
 class Heatmap extends Layer{
   constructor(){
     super();
@@ -26,15 +31,15 @@ class Heatmap extends Layer{
       "binSize": 3,
       "units": "\u00B0C",
       "map": [
-          {"x": 21, "y": 12, "value": 20.2,id:1},
-          {"x": 24, "y": 12, "value": 19.9,id:2},
-          {"x": 27, "y": 12, "value": 19.7,id:3},
-          {"x": 30, "y": 12, "value": 19.7,id:4},
-          {"x": 21, "y": 15, "value": 20.5,id:5},
-          {"x": 24, "y": 15, "value": 19.3,id:6},
-          {"x": 27, "y": 15, "value": 19.4,id:7},
-          {"x": 30, "y": 15, "value": 19.9,id:8},
-          {"value": 19.9, id:9,"points": [{"x":2.513888888888882,"y":8.0},
+          {"x": 21, "y": 12, "value": 20.2,id:1,color:"#D73027"},
+          {"x": 24, "y": 12, "value": 19.9,id:2,color:"red"},
+          {"x": 27, "y": 12, "value": 19.7,id:3,color:"red"},
+          {"x": 30, "y": 12, "value": 19.7,id:4,color:"red"},
+          {"x": 21, "y": 15, "value": 20.5,id:5,color:"red"},
+          {"x": 24, "y": 15, "value": 19.3,id:6,color:"red"},
+          {"x": 27, "y": 15, "value": 19.4,id:7,color:"red"},
+          {"x": 30, "y": 15, "value": 19.9,id:8,color:"red"},
+          {"value": 19.9, id:9,color:"#D73027","points": [{"x":2.513888888888882,"y":8.0},
                                      {"x":6.069444444444433,"y":8.0},
                                      {"x":6.069444444444434,"y":5.277535934291582},
                                      {"x":8.20833333333332,"y":2.208151950718685},
@@ -57,14 +62,14 @@ class Heatmap extends Layer{
     var height = this.height;
     return (
       <G id="heatmap" key="heatmap">
-        <Rect style={{opacity:0,fill:'rgb(0,0,255)'}} pointer-events="all" x="0" y="0" width={width} height={height}></Rect>
-        {data.map.forEach(function(element,index) {
+        <Rect style={{opacity:0,fill:'rgb(0,0,255)'}} pointerEvents="all" x="0" y="0" width={width} height={height}></Rect>
+        {data.map.map(function(element,index) {
             if (! element.points){
-              return (<Rect key={index} style={{opacity: 0.6}} x={x(element.x)} y={y(element.y)} height={Math.abs(y(data.binSize) - y(0))} width={Math.abs(x(data.binSize) -x(0))}>
-                <Text>Hi</Text>
+              return (<Rect key={index} style={styles.red} x={x(element.x)} y={y(element.y)} height={Math.abs(y(data.binSize) - y(0))} width={Math.abs(x(data.binSize) -x(0))} fill={element.color}>
+                <Text>Hi{element.x}</Text>
               </Rect>);
             }else{
-              return(<Path key={index} vector-effect="non-scaling-stroke" pointer-events="all" d={line(element.points) + "Z"} style={{cursor: "move"}} fill={element.color}>
+              return(<Path key={index} vectorEffect="non-scaling-stroke" pointerEvents="all" d={line(element.points) + "Z"} style={{cursor: "move"}} fill={element.color}>
                   <Text>Hi</Text>
               </Path>);
             }
