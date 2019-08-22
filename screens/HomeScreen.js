@@ -12,8 +12,9 @@ import {
 } from 'react-native';
 
 import { MonoText } from '../components/StyledText';
-
+import jj from '../cennzapp'
 export default function HomeScreen() {
+  jj();
   return (
     <View style={styles.container}>
       <ScrollView
