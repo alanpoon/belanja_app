@@ -15,8 +15,8 @@
  */
 
 const network = {
-  url: 'wss://localhost:9944',
-  type: 'Rimu'
+  url: 'ws://127.0.0.1:9944',
+  type: 'Centrality'
 };
 
 export default network;
