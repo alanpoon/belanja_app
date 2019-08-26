@@ -38,12 +38,19 @@ const generateWallet = async () => {
   await wallet.addKeyring(simpleKeyring);
   return wallet;
 };
-
+const CustomTypes = {
+  'Item': 'u32',
+  'ItemId': 'u64',
+  'AssetId': 'u32',
+  'AssetIdOf': 'u32',
+  'Price': '(AssetId, Balance)',
+  'PriceOf': '(AssetId, Balance)'
+};
 const createApi = async () => {
   if (attestationApi) return attestationApi;
 
   const provider = new WsProvider(network.url);
-  const api = await Api.create({ provider });
+  const api = await Api.create({ provider,types: CustomTypes  });
   const wallet = await generateWallet();
   api.setSigner(wallet);
 

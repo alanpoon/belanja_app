@@ -44,10 +44,10 @@ const attestation = {
     
     return claims;
   },
-  getItems: async (holder, issuers, topics) => {
+  getItems: async (holder,topics) => {
     const api = await createApi();
     const attestationApi = await Attestation.create(api);
-    const claims = await attestationApi.getItems(holder, issuers, topics);
+    const claims = attestationApi.api.query.xPay.items(0);
     return claims;
   }
 };

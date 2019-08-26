@@ -70,7 +70,7 @@ class Heatmap extends Layer{
               </Rect>);
             }else{
               return(<Path key={index} vectorEffect="non-scaling-stroke" pointerEvents="all" d={line(element.points) + "Z"} style={{cursor: "move"}} fill={element.color}>
-                  <Text>Hi</Text>
+                <Text>Hi</Text>
               </Path>);
             }
         }
