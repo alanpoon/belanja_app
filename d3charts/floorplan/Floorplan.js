@@ -3,8 +3,8 @@ import Svg, {G, Defs,Stop,Pattern,RadialGradient,Rect,Circle} from "react-native
 import * as scale from "d3-scale";
 import * as shape from "d3-shape";
 import * as array from "d3-array";
-import Layer from './Layer';
 import Heatmap from './Heatmap';
+import Overlays from './Overlays';
 const d3 = {
   scale,
   shape,
@@ -21,7 +21,7 @@ class Floorplan extends PureComponent <Props>{
     this.maxZoom=5;
     this.xScale = d3.scale.scaleLinear().domain([0,50.0]).range([0,500]);
     this.yScale = d3.scale.scaleLinear().domain([0,33.79]).range([0,380]);
-    this.layers=[new Heatmap().xScale(this.xScale).yScale(this.yScale)];
+    this.layers=[new Heatmap().xScale(this.xScale).yScale(this.yScale),new Overlays().xScale(this.xScale).yScale(this.yScale)];
   }
   render(){
     var width = this.xScale.range()[1] - this.xScale.range()[0],
