@@ -1,7 +1,7 @@
 import * as WebBrowser from 'expo-web-browser';
 import React from 'react';
 import {Floorplan} from '../d3charts';
-import {Upload} from '../ipfsapp';
+
 import {
   Image,
   Platform,
@@ -31,7 +31,6 @@ export default function HomeScreen() {
             style={styles.welcomeImage}
           />
           <Floorplan/>
-          <Upload/>
         </View>
 
         <View style={styles.getStartedContainer}>

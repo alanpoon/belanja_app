@@ -1,4 +1,4 @@
-import Upload from './Upload'
+import Upload from './Upload2'
 export {
   Upload
 }

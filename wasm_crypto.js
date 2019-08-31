@@ -1,0 +1,1 @@
+yarn add file:../wasm/packages/wasm-crypto

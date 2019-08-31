@@ -18,7 +18,7 @@ import { Wallet, SimpleKeyring } from '@cennznet/wallet';
 import { hexToU8a, u8aToHex } from '@cennznet/util';
 import { WsProvider } from '@cennznet/api/polkadot';
 import { Api } from '@cennznet/api';
-import { waitReady } from '@plugnet//wasm-crypto-js';
+//import { waitReady } from '@plugnet/wasm-crypto';
 import network from './network';
 
 const issuer = {
@@ -29,7 +29,7 @@ const issuer = {
 let attestationApi = null;
 
 const generateWallet = async () => {
-  await waitReady();
+  //await waitReady();
   const simpleKeyring = new SimpleKeyring();
   simpleKeyring.addFromSeed(hexToU8a(issuer.seed));
   const wallet = new Wallet();
