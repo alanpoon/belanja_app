@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
 import Svg, {G, Defs,Stop,Pattern,RadialGradient,Rect,Circle} from "react-native-svg";
-import {Dimensions} from 'react-native';
+import {Dimensions,Image,Button,TextInput,Text,AsyncStorage,View} from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
+import IPFS from 'ipfs-mini';
 import * as scale from "d3-scale";
 import * as shape from "d3-shape";
 import * as array from "d3-array";
@@ -11,20 +13,49 @@ const d3 = {
   shape,
   array
 };
-
+async function _retrieveData(key,cannotfind) {
+   try {
+     const value = await AsyncStorage.getItem(key);
+     if (value !== null) {
+       // We have data!!
+       return value;
+     }
+   } catch (error) {
+     return cannotfind;
+   }
+ };
+ async function _pickImage(ipfs_add){
+   let result = await ImagePicker.launchImageLibraryAsync({
+   allowsEditing: true,
+   aspect: [4, 3],
+   });
+   var ipfs = new IPFS({host:ipfs_add.split(":")[0],port: ipfs_add.split(":")[1], protocol: 'http'} ) // leaving out the arguments will default to these values
+   /*return await ipfs.add(result.uri,(err, res) => {
+   if (err) { throw err }
+   console.log(res);
+   if (!res.cancelled) {
+      return result.uri;
+   }
+   });*/
+   return await    ipfs.add(result.uri).uri
+};
 class Floorplan extends Component{
    state = {
+      ipfs_add:"192.168.1.194:5001",
       xScale: d3.scale.scaleLinear().domain([0,50.0]).range([0,50]),
       yScale:d3.scale.scaleLinear().domain([0,33.79]).range([0,38]),
       left: 0,
       top: 0,
       isZoom:false,
-      zoom: 1
+      zoom: 1,
+      image: ""
       };
   constructor(props){
     super(props)
     this.panZoomEnabled=true;
     this.maxZoom=5;
+    const __this = this;
+    this.ipfs_add = React.createRef();
     this.layers=[{type:"overlays",data:[{
       id:0,
       initialTop: 0,
@@ -120,7 +151,14 @@ class Floorplan extends Component{
              "x":2.513888888888882,
              "y":18
           }
-       ]}]},{type:"image",hash:""}];
+       ]}]},{type:"image",data:this.state.image==""?require("../../assets/images/sample_floorplan.png"): _pickImage(this.state.image)}];
+       if (!this.state.loaded){
+         Promise.all([_retrieveData("ipfs_add",this.state.ipfs_add),_retrieveData("ipfs_image","")]).then(function(values){
+            const ipfs_add = values[0]; const ipfs_image = values[1];
+            __this.setState({ipfs_add,ipfs_image,loaded:true});
+          })
+       }
+       
   }
    processPinch(x, y, scroll) {
 
@@ -187,13 +225,15 @@ class Floorplan extends Component{
      console.log(e);
      this.processPinch(e.clientX,e.clientY,e.deltaY);
   }
+  
   render(){
    const viewBoxSize = 65;
-   const { width, height } = Dimensions.get('window');
+   const { width, height } = this.props;
     const { left, top, zoom } = this.state;
     const resolution = viewBoxSize / Math.min(height, width);
     const __this= this;
-    return (<Svg height={height} width={width} onWheel={(e)=>this.wheel(e)} viewBox="0 0 65 65" preserveAspectRatio="xMinYMin meet">
+    
+    return (<View><Svg height={height} width={width} onWheel={(e)=>this.wheel(e)} viewBox="0 0 65 65" preserveAspectRatio="xMinYMin meet">
       <Defs>
         <RadialGradient id="metal-bump" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
           <Stop offset="0%" style={{"stopColor": 'rgb(170, 170, 170)', 'stopOpacity': 0.6}}></Stop>
@@ -210,7 +250,10 @@ class Floorplan extends Component{
            return (<Layer key={l.type} type={l.type} data={l.data} x={__this.state.xScale} y={__this.state.yScale} resolution={resolution}/>)
         })}
       </G>
-    </Svg>)
+    </Svg>
+    <Text>Ipfs Address</Text>
+    <TextInput  defaultValue={this.state.ipfs_add} onChangeText={(ipfs_add) => this.setState({ipfs_add})}  ref={this.ipfs_add}/>
+    </View>)
   }
 }
 

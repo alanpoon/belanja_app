@@ -132,7 +132,7 @@ class Layer extends Component{
       }
       </G>)
     }else if (type=="image"){
-      return(<G key="image">
+      return(<G key="image"><Image source={this.state.data}/>
       </G>)
     }
         
