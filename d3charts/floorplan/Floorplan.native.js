@@ -1,30 +1,43 @@
 import React, { Component } from 'react';
 import Svg, {G, Defs,Stop,Pattern,RadialGradient,Rect,Circle} from "react-native-svg";
-import {Dimensions} from 'react-native';
+import {PanResponder,View} from 'react-native';
 import * as scale from "d3-scale";
 import * as shape from "d3-shape";
 import * as array from "d3-array";
 import Layer from './Layernew';
-
 const d3 = {
   scale,
   shape,
   array
 };
+function calcDistance(x1, y1, x2, y2) {
+   const dx = x1 - x2;
+   const dy = y1 - y2;
+   return Math.sqrt(dx * dx + dy * dy);
+ }
+ 
+ function middle(p1, p2) {
+   return (p1 + p2) / 2;
+ }
+ 
+ function calcCenter(x1, y1, x2, y2) {
+   return {
+     x: middle(x1, x2),
+     y: middle(y1, y2),
+   };
+ }
 
 class Floorplan extends Component{
    state = {
-      xScale: d3.scale.scaleLinear().domain([0,50.0]).range([0,50]),
-      yScale:d3.scale.scaleLinear().domain([0,33.79]).range([0,38]),
+      xScale: d3.scale.scaleLinear().domain([0,50.0]).range([0,500]),
+      yScale:d3.scale.scaleLinear().domain([0,33.79]).range([0,500]),
       left: 0,
       top: 0,
-      isZoom:false,
-      zoom: 1
+      isZoom:false
       };
   constructor(props){
     super(props)
     this.panZoomEnabled=true;
-    this.maxZoom=5;
     this.layers=[{type:"overlays",data:[{
       id:0,
       initialTop: 0,
@@ -121,18 +134,82 @@ class Floorplan extends Component{
              "y":18
           }
        ]}]},{type:"image",hash:""}];
+       if(this.state.isZoom){
+         this._panResponder = PanResponder.create({
+            onPanResponderGrant: () => {},
+            onPanResponderTerminate: () => {},
+            onMoveShouldSetPanResponder: () => true,
+            onStartShouldSetPanResponder: () => true,
+            onShouldBlockNativeResponder: () => true,
+            onPanResponderTerminationRequest: () => true,
+            onMoveShouldSetPanResponderCapture: () => true,
+            onStartShouldSetPanResponderCapture: () => true,
+            onPanResponderMove: evt => {
+               const touches = evt.nativeEvent.touches;
+               const length = touches.length;
+               if (length === 1) {
+                  const [{ locationX, locationY }] = touches;
+                  this.processTouch(locationX, locationY);
+               } else if (length === 2) {
+                  const [touch1, touch2] = touches;
+                  this.processPinch(
+                  touch1.locationX,
+                  touch1.locationY,
+                  touch2.locationX,
+                  touch2.locationY
+                  );
+               }
+            },
+            onPanResponderRelease: () => {
+               this.setState({
+                  isZooming: false,
+                  isMoving: false,
+               });
+            },
+            });
+       }else{
+         this._panResponder={
+            "panHandlers":[]
+         }
+       }
+      
   }
-   processPinch(x, y, scroll) {
+  processTouch(x, y) {
+   if (!this.state.isMoving || this.state.isZooming) {
+     const { top, left } = this.state;
+     this.setState({
+       isMoving: true,
+       isZooming: false,
+       initialLeft: left,
+       initialTop: top,
+       initialX: x,
+       initialY: y,
+     });
+   } else {
+     const { initialX, initialY, initialLeft, initialTop } = this.state;
+     const dx = x - initialX;
+     const dy = y - initialY;
+     this.setState({
+       left: initialLeft + dx,
+       top: initialTop + dy,
+     });
+   }
+ }
+  processPinch(x1, y1, x2, y2) {
+      const distance = calcDistance(x1, y1, x2, y2);
+      const { x, y } = calcCenter(x1, y1, x2, y2);
 
       if (!this.state.isZooming) {
-      const { top, left, zoom } = this.state;
+      const { top, left, xScale,yScale } = this.state;
       this.setState({
          isZooming: true,
          initialX: x,
          initialY: y,
          initialTop: top,
          initialLeft: left,
-         initialZoom: zoom,
+         xScale: xScale,
+         yScale:yScale,
+         initialDistance: distance,
       });
       } else {
       const {
@@ -140,60 +217,32 @@ class Floorplan extends Component{
          initialY,
          initialTop,
          initialLeft,
-         initialZoom,
+         xScale,
+         yScale,
+         initialDistance,
       } = this.state;
 
-      const touchZoom = (scroll<0)?1.25:0.8;
+      const touchZoom = distance / initialDistance;
       const dx = x - initialX;
       const dy = y - initialY;
 
-
-      const zoom = initialZoom * touchZoom;
-      const left = (initialLeft + dx - x) * zoom + x;
-      const top = (initialTop + dy - y) * zoom + y;
+      const left = (initialLeft + dx - x) * touchZoom + x;
+      const top = (initialTop + dy - y) * touchZoom + y;
+      const xScale_n = xScale.range([xScale.range()[0],touchZoom*xScale.range()[1]]);
+      const yScale_n = yScale.range([yScale.range()[0],touchZoom*yScale.range()[1]]);
       this.setState({
-         zoom,
+         xScale:xScale_n,
+         yScale:yScale_n,
          left,
          top,
-         initialZoom:zoom,
-         initialX:x,
-         initialY:y
       });
       }
    }
-
-   processTouch(x, y) {
-      if (!this.state.isMoving || this.state.isZooming) {
-      const { top, left } = this.state;
-      this.setState({
-         isMoving: true,
-         isZooming: false,
-         initialLeft: left,
-         initialTop: top,
-         initialX: x,
-         initialY: y,
-      });
-      } else {
-      const { initialX, initialY, initialLeft, initialTop } = this.state;
-      const dx = x - initialX;
-      const dy = y - initialY;
-      this.setState({
-         left: initialLeft + dx,
-         top: initialTop + dy,
-      });
-      }
-   }
-  wheel(e){
-     console.log(e);
-     this.processPinch(e.clientX,e.clientY,e.deltaY);
-  }
   render(){
-   const viewBoxSize = 65;
-   const { width, height } = Dimensions.get('window');
-    const { left, top, zoom } = this.state;
-    const resolution = viewBoxSize / Math.min(height, width);
+    const {width,height} = this.props;
     const __this= this;
-    return (<Svg height={height} width={width} onWheel={(e)=>this.wheel(e)} viewBox="0 0 65 65" preserveAspectRatio="xMinYMin meet">
+    return (
+    <Svg height={height} width={width} preserveAspectRatio="xMinYMin meet" {...__this._panResponder.panHandlers}>
       <Defs>
         <RadialGradient id="metal-bump" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
           <Stop offset="0%" style={{"stopColor": 'rgb(170, 170, 170)', 'stopOpacity': 0.6}}></Stop>
@@ -204,10 +253,10 @@ class Floorplan extends Component{
           <Circle cx="1.5" cy="1.5" r="1" stroke="none" fill="url(#metal-bump)"></Circle>
         </Pattern>
       </Defs>
-      <G scale={zoom} x={left*resolution} y={top*resolution}>
+      <G height={height} width={width}>
         <Rect pointerEvents="all" style={{opacity:0}}></Rect>
         {this.layers.map(function(l){
-           return (<Layer key={l.type} type={l.type} data={l.data} x={__this.state.xScale} y={__this.state.yScale} resolution={resolution}/>)
+           return (<Layer key={l.type} type={l.type} data={l.data} x={__this.state.xScale} y={__this.state.yScale}/>)
         })}
       </G>
     </Svg>)

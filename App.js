@@ -17,7 +17,7 @@ export default class App extends Component {
   render() {
     return (
       <View> 
-      <Upload/></View>
+      <Floorplan width="380" height="500"/></View>
 
     )
   }

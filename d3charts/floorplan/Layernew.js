@@ -32,7 +32,7 @@ class Layer extends Component{
   state={}
   constructor(props){
     super(props);
-    const {x,y,type,data} = props;
+    const {x,y,type,data,resolution} = props;
     this.x = x;
     this.y = y;
     this.state.data = data;
@@ -46,14 +46,15 @@ class Layer extends Component{
           console.log('-------onPanResponderGrant------')
         },
         onPanResponderMove: (evt, gs) => {
-          
+          console.log("gs.dx",gs.dx);
+          const {resolution} = this.props;
           this.setState(
             state =>{
               const data = state.data.map((item,j)=>{
                 if(j==index){
                   var item_c = item;
-                  item_c['offsetTop'] = gs.dy;
-                  item_c['offsetLeft'] = gs.dx;
+                  item_c['offsetTop'] = gs.dy*resolution;
+                  item_c['offsetLeft'] = gs.dx*resolution;
                   return item_c
                 }else{
                   return item;
@@ -120,7 +121,7 @@ class Layer extends Component{
         <G key ={"i"+index} x={cx} y={cy}>
           {element.points.map(function(p,i){
                return(
-               <Circle key={"circle_"+i} vectorEffect="non-scaling-stroke" pointerEvents="all" r="4" cx={x(p.x)} cy={y(p.y)} stroke="lime" strokeWidth="2px" fill="none"/>
+               <Circle key={"circle_"+i} vectorEffect="non-scaling-stroke" pointerEvents="all" r="1" cx={x(p.x)} cy={y(p.y)} stroke="lime" strokeWidth="2px" fill="none"/>
                );
             })}
           <Path style={styles.red} {...__this._panResponder[index].panHandlers} vectorEffect="non-scaling-stroke" pointerEvents="all" d={line(element.points) + "Z"}  fill={element.color}>
