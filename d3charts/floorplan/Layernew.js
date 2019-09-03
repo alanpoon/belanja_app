@@ -1,7 +1,9 @@
 import React, { Component } from 'react';
 import * as scale from "d3-scale";
 import * as shape from "d3-shape";
-import {View, StyleSheet,PanResponder, Image} from 'react-native'
+import {View, StyleSheet,PanResponder} from 'react-native'
+import {Image} from 'react-native-svg';
+
 import Svg, {
   Circle,
   Ellipse,
@@ -27,6 +29,9 @@ const styles = StyleSheet.create({
     //color: '#D73027',
     opacity: 0.4
   },
+  welcomeImage: {
+
+  }
 });
 class Layer extends Component{
   state={}
@@ -36,6 +41,8 @@ class Layer extends Component{
     this.x = x;
     this.y = y;
     this.state.data = data;
+    if (type=="image"){
+    console.log("layernew data",data);}
     if (type=="overlays"){
       this._panResponder = this.state.data.map((e,index)=>{return PanResponder.create({
         onStartShouldSetPanResponder: (evt, gestureState) => true,
@@ -106,7 +113,7 @@ class Layer extends Component{
     
   }
   render(){
-    const {x,y,type,data} = this.props;
+    const {x,y,type,data,width,height,resolution} = this.props;
     const __this = this;
     const line = d3.shape.line()
 		.x(function(d) { return x(d.x); })
@@ -132,8 +139,10 @@ class Layer extends Component{
       }
       </G>)
     }else if (type=="image"){
-      return(<G key="image"><Image source={this.state.data}/>
+      return(<G key="image"><Image href={this.state.data} style={styles.welcomeImage} opacity="1" width={width*resolution} height={height*resolution} x="0" y="0"/>
       </G>)
+      //return(<G key="image"><Image width={width*resolution} height={height*resolution} href={{url:this.state.data}}/></G>)
+     // return(<G key="image"><Image width={width*resolution} height={height*resolution} style={{backgroundImage:"url("+this.state.data+")"}}/></G>)
     }
         
   }

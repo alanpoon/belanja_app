@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import Svg, {G, Defs,Stop,Pattern,RadialGradient,Rect,Circle} from "react-native-svg";
-import {PanResponder,View} from 'react-native';
+import {PanResponder,View,Picker} from 'react-native';
 import * as scale from "d3-scale";
 import * as shape from "d3-shape";
 import * as array from "d3-array";
@@ -29,16 +29,19 @@ function calcDistance(x1, y1, x2, y2) {
 
 class Floorplan extends Component{
    state = {
-      xScale: d3.scale.scaleLinear().domain([0,50.0]).range([0,500]),
-      yScale:d3.scale.scaleLinear().domain([0,33.79]).range([0,500]),
+      xScale: d3.scale.scaleLinear().domain([0,50.0]).range([0,50]),
+      yScale:d3.scale.scaleLinear().domain([0,33.79]).range([0,38]),
       left: 0,
       top: 0,
-      isZoom:false
+      floormapScheme:"zoom"
       };
   constructor(props){
     super(props)
     this.panZoomEnabled=true;
-    this.layers=[{type:"overlays",data:[{
+    const __this = this;
+    this.ipfs_add = React.createRef();
+    this.layers=[{type:"image",data:this.state.image==""?require("../../assets/images/sample_floorplan.png"): _pickImage(this.state.image)},
+    {type:"overlays",data:[{
       id:0,
       initialTop: 0,
       initialLeft: 0,
@@ -134,7 +137,7 @@ class Floorplan extends Component{
              "y":18
           }
        ]}]},{type:"image",hash:""}];
-       if(this.state.isZoom){
+       if(this.state.floormapScheme=="zoom"){
          this._panResponder = PanResponder.create({
             onPanResponderGrant: () => {},
             onPanResponderTerminate: () => {},
@@ -238,10 +241,19 @@ class Floorplan extends Component{
       });
       }
    }
+
   render(){
     const {width,height} = this.props;
     const __this= this;
-    return (
+    return (<View><Picker
+      selectedValue={this.state.floormapScheme}
+      style={{height: 50, width: 100}}
+      onValueChange={(itemValue, itemIndex) =>
+        this.setState({floormapScheme: itemValue})
+      }>
+      <Picker.Item label="Zoom" value="zoom" />
+      <Picker.Item label="Move tables" value="move" />
+    </Picker>
     <Svg height={height} width={width} preserveAspectRatio="xMinYMin meet" {...__this._panResponder.panHandlers}>
       <Defs>
         <RadialGradient id="metal-bump" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
@@ -256,10 +268,12 @@ class Floorplan extends Component{
       <G height={height} width={width}>
         <Rect pointerEvents="all" style={{opacity:0}}></Rect>
         {this.layers.map(function(l){
-           return (<Layer key={l.type} type={l.type} data={l.data} x={__this.state.xScale} y={__this.state.yScale}/>)
+           return (<Layer  key={l.type} type={l.type} data={l.data} x={__this.state.xScale} y={__this.state.yScale} resolution={resolution} width={width} height={height}/>)
         })}
       </G>
-    </Svg>)
+    </Svg> <Text>Ipfs Address</Text>
+    <TextInput  defaultValue={this.state.ipfs_add} onChangeText={(ipfs_add) => this.setState({ipfs_add})}  ref={this.ipfs_add}/>
+    </View>)
   }
 }
 

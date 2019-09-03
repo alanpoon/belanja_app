@@ -70,6 +70,7 @@
     "react-native-randombytes": "^3.5.3",
     "react-native-stream": "^0.1.9",
     "react-native-svg": "^9.7.1",
+    "react-native-svg-uri": "^1.2.3",
     "react-native-tcp": "^3.2.1",
     "react-native-udp": "^2.1.0",
     "react-native-web": "^0.11.4",
