@@ -1,7 +1,6 @@
 import * as WebBrowser from 'expo-web-browser';
 import React from 'react';
-import {Floorplan} from '../d3charts';
-
+import {Button} from 'react-native';
 import {
   Image,
   Platform,
@@ -14,7 +13,7 @@ import {
 
 import { MonoText } from '../components/StyledText';
 import jj from '../cennzapp'
-export default function HomeScreen() {
+export default function HomeScreen(props) {
   jj();
   return (
     <View style={styles.container}>
@@ -30,7 +29,14 @@ export default function HomeScreen() {
             }
             style={styles.welcomeImage}
           />
-          <Floorplan/>
+          <Button
+          title="Go to Floorplan"
+          onPress={() =>
+            props.navigation.navigate('FloorplanUp', {
+              greeting: 'Hallo',
+            })
+          }
+        />
         </View>
 
         <View style={styles.getStartedContainer}>

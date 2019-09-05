@@ -5,15 +5,15 @@ import {Dimensions,Image,Button,TextInput,Text,View} from 'react-native';
 import * as scale from "d3-scale";
 import * as shape from "d3-shape";
 import * as array from "d3-array";
-import Layer from './Layernew';
-import {_retrieveData,_pickImage} from './utils';
+import Layer from './Layer';
+import * as Utils from '../../utils';
 const d3 = {
   scale,
   shape,
   array
 };
 
-class Floorplan extends Component{
+class FloorplanEditor extends Component{
    state = {
       xScale: d3.scale.scaleLinear().domain([0,50.0]).range([0,50]),
       yScale:d3.scale.scaleLinear().domain([0,33.79]).range([0,38]),
@@ -126,7 +126,7 @@ class Floorplan extends Component{
           }
        ]}]}];
        if (!this.state.loaded){
-         Promise.all([_retrieveData("ipfs_add",this.state.ipfs_add),_retrieveData("ipfs_image","")]).then(function(values){
+         Promise.all([Utils._retrieveData("ipfs_add",this.state.ipfs_add),Utils._retrieveData("ipfs_image","")]).then(function(values){
             const ipfs_add = values[0]; const ipfs_image = values[1];
             __this.setState({ipfs_add,ipfs_image,loaded:true});
           })
@@ -166,7 +166,7 @@ class Floorplan extends Component{
          zoom,
          left,
          top,
-         initialZoom:zoom,
+         1:zoom,
          initialX:x,
          initialY:y
       });
@@ -198,12 +198,14 @@ class Floorplan extends Component{
      console.log(e);
      this.processPinch(e.clientX,e.clientY,e.deltaY);
   }
-
+  save(){
+    
+  }
   render(){
    const viewBoxSize = 65;
-   const width= this.props.navigation.getParam("width",500);
-   const height= this.props.navigation.getParam("height",500);
-    const { left, top, zoom,ipfs_add } = this.state;
+   const width= this.props.navigation.getParam("width",200);
+   const height= this.props.navigation.getParam("height",200);
+    const { left, top, zoom } = this.state;
     const resolution = viewBoxSize / Math.min(height, width);
     const __this= this;
     return (<View><Svg height={height} width={width} onWheel={(e)=>this.wheel(e)} viewBox="0 0 65 65" preserveAspectRatio="xMinYMin meet">
@@ -226,10 +228,10 @@ class Floorplan extends Component{
     </Svg>
     <Button
           title="Save"
-          onPress={this.getIpfs.bind(this)}
+          onPress={this.save.bind(this)}
         />
     </View>)
   }
 }
 
-export default Floorplan;
+export default FloorplanEditor;

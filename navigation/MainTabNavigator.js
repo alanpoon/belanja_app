@@ -6,7 +6,8 @@ import TabBarIcon from '../components/TabBarIcon';
 import HomeScreen from '../screens/HomeScreen';
 import LinksScreen from '../screens/LinksScreen';
 import SettingsScreen from '../screens/SettingsScreen';
-
+import FloorplanUp from '../screens/merchant/FloorplanUp';
+import FloorplanEditor from '../screens/merchant/FloorplanEditor';
 const config = Platform.select({
   web: { headerMode: 'screen' },
   default: {},
@@ -15,6 +16,8 @@ const config = Platform.select({
 const HomeStack = createStackNavigator(
   {
     Home: HomeScreen,
+    FloorplanUp:FloorplanUp,
+    FloorplanEditor:FloorplanEditor
   },
   config
 );

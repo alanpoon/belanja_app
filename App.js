@@ -1,25 +1,30 @@
 import { AppLoading } from 'expo';
-import './shim.js';
 import { Asset } from 'expo-asset';
 import * as Font from 'expo-font';
-import React, { useState,Component } from 'react';
+import React, { useState } from 'react';
 import { Platform, StatusBar, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import Upload from './ipfsapp/Upload2';
+import './shim.js';
 import AppNavigator from './navigation/AppNavigator';
-import Floorplan from './d3charts/floorplan/Floorplan';
 
-export default class App extends Component {
-  constructor(props) {
-    super(props);
-  }
+export default function App(props) {
+  const [isLoadingComplete, setLoadingComplete] = useState(false);
 
-  render() {
+  if (!isLoadingComplete && !props.skipLoadingScreen) {
     return (
-      <View> 
-      <Floorplan width="500" height="500"/></View>
-
-    )
+      <AppLoading
+        startAsync={loadResourcesAsync}
+        onError={handleLoadingError}
+        onFinish={() => handleFinishLoading(setLoadingComplete)}
+      />
+    );
+  } else {
+    return (
+      <View style={styles.container}>
+        {Platform.OS === 'ios' && <StatusBar barStyle="default" />}
+        <AppNavigator />
+      </View>
+    );
   }
 }
 
