@@ -1,237 +1,361 @@
-import React, { Component } from 'react';
-import Svg, {G, Defs,Stop,Pattern,RadialGradient,Rect,Circle} from "react-native-svg";
-import {Dimensions,Image,Button,TextInput,Text,View} from 'react-native';
-
-import * as scale from "d3-scale";
-import * as shape from "d3-shape";
-import * as array from "d3-array";
-import Layer from './Layer';
-import * as Utils from '../../utils';
-const d3 = {
-  scale,
-  shape,
-  array
-};
-
-class FloorplanEditor extends Component{
-   state = {
-      xScale: d3.scale.scaleLinear().domain([0,50.0]).range([0,50]),
-      yScale:d3.scale.scaleLinear().domain([0,33.79]).range([0,38]),
-      left: 0,
-      top: 0,
-      zoom: 1,
-      image: "",
-      rerender:0,
-      };
+import { ExpoWebGLRenderingContext, GLView } from 'expo-gl';
+import { Renderer, loadTextureAsync, THREE, renderer,utils } from 'expo-three';
+import {PanResponder,PixelRatio,Dimensions,TextInput,KeyboardAvoidingView} from 'react-native';
+import * as React from 'react';
+import  TextMesh from '../../TextMesh';
+global.THREE = THREE;
+export default class FloorplanEditor extends React.Component {
+  state={timeout:null,
+  isUserInteracting:false,
+  onMouseDownMouseX: 0, onMouseDownMouseY : 0,
+  lon :0, onMouseDownLon : 0,
+  lat : 0, onMouseDownLat : 0,
+  phi : 0, theta : 0,
+  objects:[],
+  scene:new THREE.Scene()
+  };
+  cubeGeo=null;
+  cubeMaterial=null;
+  width = 0;
+  height = 0;
+  raycaster = new THREE.Raycaster();
+  camera=null;
+  plane=null;
+  lastFrameTime;
+  image;
+  text="hellllllll0";
   constructor(props){
-    super(props)
-    this.panZoomEnabled=true;
-    this.maxZoom=5;
-    const __this = this;
-    this.layers=[{type:"image",data:props.navigation.getParam("image",require("../../assets/images/sample_floorplan.png"))},
-    {type:"overlays",data:[{
-      id:0,
-      initialTop: 0,
-      initialLeft: 0,
-      offsetTop: 0,
-      offsetLeft: 0,
-      selectedIndex:1,
-      color:"#D73027",
-      points:[
-        {
-           "x":2.513888888888882,
-           "y":8
-        },
-        {
-           "x":6.069444444444433,
-           "y":8
-        },
-        {
-           "x":6.069444444444434,
-           "y":5.277535934291582
-        },
-        {
-           "x":8.20833333333332,
-           "y":2.208151950718685
-        },
-        {
-           "x":13.958333333333323,
-           "y":2.208151950718685
-        },
-        {
-           "x":16.277777777777825,
-           "y":5.277535934291582
-        },
-        {
-           "x":16.277777777777803,
-           "y":10.08151950718685
-        },
-        {
-           "x":17.20833333333337,
-           "y":10.012135523613962
-        },
-        {
-           "x":17.27777777777782,
-           "y":18.1387679671458
-        },
-        {
-           "x":2.513888888888882,
-           "y":18
-        }
-     ]},{id:1,initialTop: 10,
-        initialLeft: 10,
-        offsetTop: 0,
-        offsetLeft: 0,
-        color:"#D73027",
-        selectedIndex:1, points:[
-          {
-             "x":2.513888888888882,
-             "y":8
-          },
-          {
-             "x":6.069444444444433,
-             "y":8
-          },
-          {
-             "x":6.069444444444434,
-             "y":5.277535934291582
-          },
-          {
-             "x":8.20833333333332,
-             "y":2.208151950718685
-          },
-          {
-             "x":13.958333333333323,
-             "y":2.208151950718685
-          },
-          {
-             "x":16.277777777777825,
-             "y":5.277535934291582
-          },
-          {
-             "x":16.277777777777803,
-             "y":10.08151950718685
-          },
-          {
-             "x":17.20833333333337,
-             "y":10.012135523613962
-          },
-          {
-             "x":17.27777777777782,
-             "y":18.1387679671458
-          },
-          {
-             "x":2.513888888888882,
-             "y":18
+     super(props)
+     this.image = props.navigation.getParam("image",
+     require("../../assets/images/IMG20190914110954.jpg"))
+  }
+  create_cube(intersect){
+    var voxel = new THREE.Mesh(this.cubeGeo, this.cubeMaterial);
+    console.log("cubeMaterial",this.cubeMaterial);
+    voxel.position.copy(intersect.point);
+    //voxel.position.divideScalar(50).floor().multiplyScalar(50).addScalar(25);
+    //voxel.position.copy(intersect.point).add(intersect.face.normal);
+    //voxel.position.divideScalar(50).floor().multiplyScalar(50).addScalar(25);
+    this.state.scene.add(voxel);
+    this.state.objects.push(voxel);
+  }
+  create_cube2(x,y,z){
+    var voxel = new THREE.Mesh(this.cubeGeo, this.cubeMaterial);
+    voxel.position.set(x,y,z);
+    this.state.scene.add(voxel);
+    this.state.objects.push(voxel);
+  }
+  componentWillMount() {
+    this.panResponder = this.buildGestures();
+  }
+  castPoint = ({ locationX: x, locationY: y }) => {
+    let touch = new THREE.Vector2();
+    console.log("width",this.width," height",this.height);
+    // touch.set( x, y);
+    touch.set(((x / this.width) * 2) - 1, - (y / this.height) * 2 + 1);
+
+    return touch;
+  }
+  buildGestures= () =>  PanResponder.create({
+    onStartShouldSetPanResponder: (evt, gestureState) => true,
+    onStartShouldSetPanResponderCapture: (evt, gestureState) => true,
+    onMoveShouldSetPanResponder: (evt, gestureState) => true,
+    onMoveShouldSetPanResponderCapture: (evt, gestureState) => true,
+    onPanResponderGrant: ((event, gestureState) => {
+      console.log("grant...");
+        this.state.isUserInteracting = true;
+        
+				this.state.onMouseDownMouseX = event.nativeEvent.locationX;
+				this.state.onMouseDownMouseY = event.nativeEvent.locationY;
+
+				this.state.onMouseDownLon = this.state.lon;
+        this.state.onMouseDownLat = this.state.lat;
+        let touch = this.castPoint(event.nativeEvent);
+        this.raycaster.setFromCamera(touch, this.camera);
+        //this.raycaster.setFromCamera({x:event.nativeEvent.locationX,y:event.nativeEvent.locationY}, this.camera);
+        var intersects = this.raycaster.intersectObjects(this.state.scene.children);
+        var intersects_cube = this.raycaster.intersectObjects(this.state.objects);
+        console.log("intersects",intersects);
+        if (intersects.length > 0) {
+          if (intersects_cube.length==0){
+            var intersect = intersects[0];
+            this.create_cube(intersect);
+          }else{
+            this.textposition = intersects_cube[0].point;
+            this.createText2()
           }
-       ]}]}];
-       if (!this.state.loaded){
-         Promise.all([Utils._retrieveData("ipfs_add",this.state.ipfs_add),Utils._retrieveData("ipfs_image","")]).then(function(values){
-            const ipfs_add = values[0]; const ipfs_image = values[1];
-            __this.setState({ipfs_add,ipfs_image,loaded:true});
-          })
-       }
-       
-  }
-   processPinch(x, y, scroll) {
+          
+        }
+        
+        
+    }),
+    onPanResponderMove: ((event, gestureState) => {
+      if ( this.state.isUserInteracting === true ) {
 
-      if (!this.state.isZooming) {
-      const { top, left, zoom } = this.state;
-      this.setState({
-         isZooming: true,
-         initialX: x,
-         initialY: y,
-         initialTop: top,
-         initialLeft: left,
-         initialZoom: zoom,
-      });
-      } else {
-      const {
-         initialX,
-         initialY,
-         initialTop,
-         initialLeft,
-         initialZoom,
-      } = this.state;
-
-      const touchZoom = (scroll<0)?1.25:0.8;
-      const dx = x - initialX;
-      const dy = y - initialY;
-
-
-      const zoom = initialZoom * touchZoom;
-      const left = (initialLeft + dx - x) * zoom + x;
-      const top = (initialTop + dy - y) * zoom + y;
-      this.setState({
-         zoom,
-         left,
-         top,
-         1:zoom,
-         initialX:x,
-         initialY:y
-      });
+        const clientX = event.nativeEvent.locationX;
+        const clientY = event.nativeEvent.locationY;
+        this.state.lon=( this.state.onMouseDownMouseX - clientX ) * 0.1 + this.state.onMouseDownLon;
+        this.state.lat=(clientY- this.state.onMouseDownMouseY)*0.1+this.state.onMouseDownLat;
       }
-   }
 
-   processTouch(x, y) {
-      if (!this.state.isMoving || this.state.isZooming) {
-      const { top, left } = this.state;
+    }),
+    onPanResponderRelease: ((event, gestureState) => {
       this.setState({
-         isMoving: true,
-         isZooming: false,
-         initialLeft: left,
-         initialTop: top,
-         initialX: x,
-         initialY: y,
-      });
-      } else {
-      const { initialX, initialY, initialLeft, initialTop } = this.state;
-      const dx = x - initialX;
-      const dy = y - initialY;
-      this.setState({
-         left: initialLeft + dx,
-         top: initialTop + dy,
-      });
-      }
-   }
-  wheel(e){
-     console.log(e);
-     this.processPinch(e.clientX,e.clientY,e.deltaY);
+        isUserInteracting:false
+      })
+    }),
+    onPanResponderTerminate: ((event, gestureState) => {
+    }),
+  })
+  configureCamera = ({ width, height }) => {
+    // camera
+    //let camera = new THREE.PerspectiveCamera(45, width / height, 1, 10000);
+    //let camera = new THREE.PerspectiveCamera(45, width / height, 1, 10000);
+    this.camera.position.set(0, 0, 0);
+    this.camera.lookAt(new THREE.Vector3());
+  
   }
-  save(){
+  onResize = ({ width, height }) => {
+    console.log("onResize");
+    this.width = width;
+    this.height = height;
+
+  }
+  loadFont=()=>{
+    this.font = new THREE.Font(require("./three_fonts/neue_haas_unica_pro_medium.json"));
     
   }
-  render(){
-   const viewBoxSize = 65;
-   const width= this.props.navigation.getParam("width",200);
-   const height= this.props.navigation.getParam("height",200);
-    const { left, top, zoom } = this.state;
-    const resolution = viewBoxSize / Math.min(height, width);
-    const __this= this;
-    return (<View><Svg height={height} width={width} onWheel={(e)=>this.wheel(e)} viewBox="0 0 65 65" preserveAspectRatio="xMinYMin meet">
-      <Defs>
-        <RadialGradient id="metal-bump" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
-          <Stop offset="0%" style={{"stopColor": 'rgb(170, 170, 170)', 'stopOpacity': 0.6}}></Stop>
-          <Stop offset="100%" style={{'stopColor': 'rgb(204, 204, 204)', 'stopOpacity': 0.5}}></Stop>
-        </RadialGradient>
-        <Pattern patternUnits="userSpaceOnUse" x="0" y="0" width="3" height="5">
-          <Rect height="3" width="3" stroke="none" fill="rgba(204,204,204,0.5)"></Rect>
-          <Circle cx="1.5" cy="1.5" r="1" stroke="none" fill="url(#metal-bump)"></Circle>
-        </Pattern>
-      </Defs>
-      <G scale={zoom} x={left*resolution} y={top*resolution}>
-        <Rect pointerEvents="all" style={{opacity:0}}></Rect>
-        {this.layers.map(function(l){
-           return (<Layer key={l.type} type={l.type} data={l.data} x={__this.state.xScale} y={__this.state.yScale} resolution={resolution} width={width} height={height}/>)
-        })}
-      </G>
-    </Svg>
-    <Button
-          title="Save"
-          onPress={this.save.bind(this)}
-        />
-    </View>)
+  refreshText=()=>{
+    this.state.scene.remove(this.textMesh);
+    this.createText2()
   }
-}
+  createText2 = ()=> {
+    const height = 2,
+				size = 20,
+				hover = 30,
 
-export default FloorplanEditor;
+				curveSegments = 4,
+
+				bevelThickness = 2,
+				bevelSize = 1.5,
+        bevelEnabled = true;
+    const materials = [
+      new THREE.MeshPhongMaterial( { color: 0xffffff, flatShading: true } ), // front
+      new THREE.MeshPhongMaterial( { color: 0xffffff } ) // side
+    ];
+    var textGeo = new THREE.TextGeometry( this.text, {
+
+      font: this.font,
+
+      size: size,
+      height: height,
+      curveSegments: curveSegments,
+
+      bevelThickness: bevelThickness,
+      bevelSize: bevelSize,
+      bevelEnabled: bevelEnabled
+
+    } );
+
+    textGeo.computeBoundingBox();
+    textGeo.computeVertexNormals();
+
+    // "fix" side normals by removing z-component of normals for side faces
+    // (this doesn't work well for beveled geometry as then we lose nice curvature around z-axis)
+
+    if ( ! bevelEnabled ) {
+
+      var triangleAreaHeuristics = 0.1 * ( height * size );
+
+      for ( var i = 0; i < textGeo.faces.length; i ++ ) {
+
+        var face = textGeo.faces[ i ];
+
+        if ( face.materialIndex == 1 ) {
+
+          for ( var j = 0; j < face.vertexNormals.length; j ++ ) {
+
+            face.vertexNormals[ j ].z = 0;
+            face.vertexNormals[ j ].normalize();
+
+          }
+
+          var va = textGeo.vertices[ face.a ];
+          var vb = textGeo.vertices[ face.b ];
+          var vc = textGeo.vertices[ face.c ];
+
+          var s = GeometryUtils.triangleArea( va, vb, vc );
+
+          if ( s > triangleAreaHeuristics ) {
+
+            for ( var j = 0; j < face.vertexNormals.length; j ++ ) {
+
+              face.vertexNormals[ j ].copy( face.normal );
+
+            }
+
+          }
+
+        }
+
+      }
+
+    }
+
+    var centerOffset = - 0.5 * ( textGeo.boundingBox.max.x - textGeo.boundingBox.min.x );
+
+    textGeo = new THREE.BufferGeometry().fromGeometry( textGeo );
+
+    this.textMesh = new THREE.Mesh( textGeo, materials );
+
+    /*textMesh1.position.x = centerOffset;
+    textMesh1.position.y = hover;
+    textMesh1.position.z = 0;
+    */
+   this.textMesh.position.copy(this.textposition)
+   this.textMesh.rotation.x = Math.PI/2 ;
+   this.textMesh.rotation.y = Math.PI/2;
+   this.textMesh.rotation.z = -Math.PI/2;
+    this.state.scene.add( this.textMesh );
+
+  }
+  createText = () => {
+    this.textMesh = new TextMesh();
+    this.textMesh.rotation.y = Math.PI;
+    this.state.scene.add(this.textMesh);
+    this.textMesh.material = new THREE.MeshPhongMaterial({ color: 0x056ecf });
+    this.textMesh.update({
+      text: 'Hey There :)',
+      font: require('../../assets/fonts/neue_haas_unica_pro_medium.json'), // This accepts json, THREE.Font, or a uri to remote THREE.Font json
+      size: 10, //Size of the text. Default is 100.
+      height: 5, //Thickness to extrude text. Default is 50.
+      curveSegments: 12, // — Integer. Number of points on the curves. Default is 12.
+      bevelEnabled: false, // — Boolean. Turn on bevel. Default is False.
+      bevelThickness: 1, // — Float. How deep into text bevel goes. Default is 10.
+      bevelSize: 0.8, // — Float. How far from text outline is bevel. Default is 8.
+      bevelSegments: 0.3, // — Integer. Number of bevel segments. Default is 3.
+    });
+    utils.scaleLongestSideToSize(this.textMesh, 5);
+    utils.alignMesh(this.textMesh, { y: 1, x: 0.5, z: 0.5 });
+  };
+
+  render(){
+    const __this = this;
+      return (
+    <KeyboardAvoidingView
+    behavior={'padding'}
+          style={{ height: '100%', flex: 1 }}>
+    <GLView
+      //style={{ flex: 1 }}
+      {...this.panResponder.panHandlers}
+      onContextCreate={async (gl) => {
+        this.loadFont();
+        var { drawingBufferWidth: width, drawingBufferHeight: height } = gl;
+        width = width/PixelRatio.get();
+        height = height/PixelRatio.get();
+        console.log("width",width,"height",height);
+        this.onResize({ width, height })
+        const sceneColor = 0x6ad6f0;
+        const isUserInteracting = __this.state.isUserInteracting;
+        // Create a WebGLRenderer without a DOM element
+        const renderer = new Renderer({ gl, antialias: true });
+        renderer.setSize(width, height);
+        renderer.setClearColor(sceneColor);
+        console.log("PixelRatio.get",PixelRatio.get());
+        renderer.setPixelRatio(PixelRatio.get())
+        this.camera = new THREE.PerspectiveCamera(
+          75,
+          width / height,
+          1,
+          1100,
+        );
+        this.configureCamera({width,height});
+        //this.camera.lookAt(new THREE.Vector3( 0, 0, 0 ));
+        //scene.fog = new THREE.Fog(sceneColor, 1, 10000);
+        //scene.add(new THREE.GridHelper(10, 10));
+
+        //var geometry = new THREE.SphereBufferGeometry( 500, 60, 40 );
+        var geometry = new THREE.CylinderGeometry( 500, 500, 1000, 64, 1, true );
+				// invert the geometry on therenderer x-axis so that all of the faces point inward
+        //geometry.scale( -1, 1, 1 );
+        geometry.scale( 1, -1, 1 );
+        const texture = await loadTextureAsync({asset:this.image});
+        console.log("texture",this.image)
+        var material = new THREE.MeshBasicMaterial( { map: texture } );
+        var mesh1 = new THREE.Mesh(geometry,material);
+        this.state.scene.add(mesh1);
+         this.cubeGeo = new THREE.BoxGeometry(50, 50, 50);
+        this.cubeMaterial =  new THREE.MeshBasicMaterial( { color: 0xff0000, opacity: 0.5, transparent: true } );
+        this.create_cube2(-125,-62,0);
+        var poleGeo = new THREE.BoxGeometry(5, 375, 5);
+        var poleMat = new THREE.MeshBasicMaterial({
+          color: 0xffffff,
+          specular: 0x111111,
+          shininess: 100,
+        });
+        var mesh2 = new THREE.Mesh(poleGeo, poleMat);
+        mesh2.position.x = -125;
+        mesh2.position.y = -62;
+        mesh2.receiveShadow = true;
+        mesh2.castShadow = true;
+        this.state.scene.add(mesh2);
+        this.state.objects.push(mesh2);
+        const pointLight = new THREE.PointLight(0xffffff, 2, 1000, 1);
+        pointLight.position.set(0, 200, 200);
+        this.state.scene.add(pointLight);
+
+        const spotLight = new THREE.SpotLight(0xffffff, 0.5);
+        spotLight.position.set(0, 500, 100);
+        spotLight.lookAt(this.state.scene.position);
+        this.state.scene.add(spotLight);
+
+        function update() {
+
+          if ( isUserInteracting === false ) {
+  
+            //lon += 0.1;
+  
+          }
+          const lon = __this.state.lon;
+          const lat = Math.max( - 85, Math.min( 85, __this.state.lat ) );
+          const phi = THREE.Math.degToRad( 90 - lat );
+          const theta = THREE.Math.degToRad( lon );
+          const x =  500 * Math.sin( phi ) * Math.cos( theta );
+          const y =  500 * Math.cos( phi );
+          const z = 500 * Math.sin( phi ) * Math.sin( theta );
+          __this.camera.lookAt(new THREE.Vector3( x, y, z ));
+          
+          /*
+          // distortion
+          camera.position.copy( camera.target ).negate();
+          */
+  
+          renderer.render( __this.state.scene, __this.camera );
+  
+        }
+
+        // Setup an animation loop
+        const render = () => {
+          requestAnimationFrame(render);
+          update();
+          gl.endFrameEXP();
+        };
+        render();
+      }}
+    />
+    <TextInput
+            style={{
+              height: 40,
+              borderTopColor: 'gray',
+              borderTopWidth: 1,
+              width: '100%',
+              fontSize: 24,
+              color: '#056ECF',
+              paddingHorizontal: 12,
+            }}
+            onChangeText={text => {this.text = text; this.refreshText()}}
+          />
+    </KeyboardAvoidingView>   
+  );
+}
+}  

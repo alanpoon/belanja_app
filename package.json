@@ -51,6 +51,8 @@
     "expo-image-picker": "~6.0.0",
     "expo-random": "~6.0.0",
     "expo-web-browser": "6.0.0",
+    "expo-gl": "^6.0.0",
+    "expo-three": "^4.0.4",
     "hdkey": "^1.1.1",
     "https-browserify": "~0.0.0",
     "ipfs-mini": "^1.1.5",
