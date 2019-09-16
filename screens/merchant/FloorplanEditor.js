@@ -3,6 +3,7 @@ import { Renderer, loadTextureAsync, THREE, renderer,utils } from 'expo-three';
 import {PanResponder,PixelRatio,Dimensions,TextInput,KeyboardAvoidingView} from 'react-native';
 import * as React from 'react';
 import  TextMesh from '../../TextMesh';
+import './BallSpinerLoader';
 global.THREE = THREE;
 export default class FloorplanEditor extends React.Component {
   state={timeout:null,
@@ -24,6 +25,7 @@ export default class FloorplanEditor extends React.Component {
   lastFrameTime;
   image;
   text="hellllllll0";
+  spinLoader=null;
   constructor(props){
      super(props)
      this.image = props.navigation.getParam("image",
@@ -79,12 +81,13 @@ export default class FloorplanEditor extends React.Component {
         if (intersects.length > 0) {
           if (intersects_cube.length==0){
             var intersect = intersects[0];
-            this.create_cube(intersect);
+            //this.create_cube(intersect);
+            this.spinLoader = new THREE.BallSpinerLoader({ groupRadius:20 ,intersect:intersect});
+            this.state.scene.add(this.spinLoader.mesh);
           }else{
-            this.textposition = intersects_cube[0].point;
+            this.textposition = intersects_cube[0];
             this.createText2()
           }
-          
         }
         
         
@@ -100,6 +103,8 @@ export default class FloorplanEditor extends React.Component {
 
     }),
     onPanResponderRelease: ((event, gestureState) => {
+      this.state.scene.remove(this.spinLoader.mesh);
+      this.spinLoader = null;
       this.setState({
         isUserInteracting:false
       })
@@ -160,48 +165,6 @@ export default class FloorplanEditor extends React.Component {
     textGeo.computeBoundingBox();
     textGeo.computeVertexNormals();
 
-    // "fix" side normals by removing z-component of normals for side faces
-    // (this doesn't work well for beveled geometry as then we lose nice curvature around z-axis)
-
-    if ( ! bevelEnabled ) {
-
-      var triangleAreaHeuristics = 0.1 * ( height * size );
-
-      for ( var i = 0; i < textGeo.faces.length; i ++ ) {
-
-        var face = textGeo.faces[ i ];
-
-        if ( face.materialIndex == 1 ) {
-
-          for ( var j = 0; j < face.vertexNormals.length; j ++ ) {
-
-            face.vertexNormals[ j ].z = 0;
-            face.vertexNormals[ j ].normalize();
-
-          }
-
-          var va = textGeo.vertices[ face.a ];
-          var vb = textGeo.vertices[ face.b ];
-          var vc = textGeo.vertices[ face.c ];
-
-          var s = GeometryUtils.triangleArea( va, vb, vc );
-
-          if ( s > triangleAreaHeuristics ) {
-
-            for ( var j = 0; j < face.vertexNormals.length; j ++ ) {
-
-              face.vertexNormals[ j ].copy( face.normal );
-
-            }
-
-          }
-
-        }
-
-      }
-
-    }
-
     var centerOffset = - 0.5 * ( textGeo.boundingBox.max.x - textGeo.boundingBox.min.x );
 
     textGeo = new THREE.BufferGeometry().fromGeometry( textGeo );
@@ -212,11 +175,11 @@ export default class FloorplanEditor extends React.Component {
     textMesh1.position.y = hover;
     textMesh1.position.z = 0;
     */
-   this.textMesh.position.copy(this.textposition)
-   this.textMesh.rotation.x = Math.PI/2 ;
-   this.textMesh.rotation.y = Math.PI/2;
+   this.textMesh.position.copy(this.textposition.point).add(this.textposition.face.normal);
+   this.textMesh.rotation.x = -Math.PI/2 ;
+   this.textMesh.rotation.y = -Math.PI/2;
    this.textMesh.rotation.z = -Math.PI/2;
-    this.state.scene.add( this.textMesh );
+   this.state.scene.add( this.textMesh );
 
   }
   createText = () => {
@@ -337,6 +300,10 @@ export default class FloorplanEditor extends React.Component {
         // Setup an animation loop
         const render = () => {
           requestAnimationFrame(render);
+          if (this.spinLoader!=null){
+            //this.spinLoader.animate();
+          }
+          
           update();
           gl.endFrameEXP();
         };

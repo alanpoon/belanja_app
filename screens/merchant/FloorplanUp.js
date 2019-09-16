@@ -11,7 +11,7 @@ export default class FloorplanUp extends Component {
     image: null,
     image_hash:null,
     advance_setting:1,
-    ipfs_add:"192.168.1.195:5001"
+    ipfs_add:"127.0.0.1:5001"
   };
   _pickImage(){
     const __this =this;
