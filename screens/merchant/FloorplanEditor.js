@@ -2,7 +2,6 @@ import { ExpoWebGLRenderingContext, GLView } from 'expo-gl';
 import { Renderer, loadTextureAsync, THREE, renderer,utils } from 'expo-three';
 import {PanResponder,PixelRatio,Dimensions,TextInput,KeyboardAvoidingView} from 'react-native';
 import * as React from 'react';
-import  TextMesh from '../../TextMesh';
 import './BallSpinerLoader';
 global.THREE = THREE;
 export default class FloorplanEditor extends React.Component {
@@ -22,6 +21,7 @@ export default class FloorplanEditor extends React.Component {
   raycaster = new THREE.Raycaster();
   camera=null;
   plane=null;
+  spinnerNow=null;
   lastFrameTime;
   image;
   text="hellllllll0";
@@ -33,11 +33,7 @@ export default class FloorplanEditor extends React.Component {
   }
   create_cube(intersect){
     var voxel = new THREE.Mesh(this.cubeGeo, this.cubeMaterial);
-    console.log("cubeMaterial",this.cubeMaterial);
-    voxel.position.copy(intersect.point);
-    //voxel.position.divideScalar(50).floor().multiplyScalar(50).addScalar(25);
-    //voxel.position.copy(intersect.point).add(intersect.face.normal);
-    //voxel.position.divideScalar(50).floor().multiplyScalar(50).addScalar(25);
+    voxel.position.copy(intersect);
     this.state.scene.add(voxel);
     this.state.objects.push(voxel);
   }
@@ -82,11 +78,12 @@ export default class FloorplanEditor extends React.Component {
           if (intersects_cube.length==0){
             var intersect = intersects[0];
             //this.create_cube(intersect);
-            this.spinLoader = new THREE.BallSpinerLoader({ groupRadius:20 ,intersect:intersect});
+            this.spinnerNow = new Date();
+            this.spinLoader = new THREE.BallSpinerLoader({ groupRadius:20 ,intersect:intersect,camera:this.camera});
             this.state.scene.add(this.spinLoader.mesh);
           }else{
             this.textposition = intersects_cube[0];
-            this.createText2()
+            this.create_text()
           }
         }
         
@@ -103,8 +100,13 @@ export default class FloorplanEditor extends React.Component {
 
     }),
     onPanResponderRelease: ((event, gestureState) => {
-      this.state.scene.remove(this.spinLoader.mesh);
-      this.spinLoader = null;
+      if (this.spinLoader!=null){
+        this.state.scene.remove(this.spinLoader.mesh);
+        this.spinLoader = null;
+      }
+      if(this.spinnerNow!=null){
+        this.spinnerNow = null;
+      }
       this.setState({
         isUserInteracting:false
       })
@@ -132,9 +134,16 @@ export default class FloorplanEditor extends React.Component {
   }
   refreshText=()=>{
     this.state.scene.remove(this.textMesh);
-    this.createText2()
+    this.create_text()
   }
-  createText2 = ()=> {
+  face_camera =(mesh)=>{
+    const {x,y,z} = (typeof mesh.position=="undefined")?mesh:mesh.position;
+
+   mesh.rotation.y = Math.atan2( ( this.camera.position.x - x ), ( this.camera.position.z - z ) );
+   this.state.scene.add( mesh );
+
+  }
+  create_text = ()=> {
     const height = 2,
 				size = 20,
 				hover = 30,
@@ -164,43 +173,13 @@ export default class FloorplanEditor extends React.Component {
 
     textGeo.computeBoundingBox();
     textGeo.computeVertexNormals();
-
-    var centerOffset = - 0.5 * ( textGeo.boundingBox.max.x - textGeo.boundingBox.min.x );
-
     textGeo = new THREE.BufferGeometry().fromGeometry( textGeo );
 
     this.textMesh = new THREE.Mesh( textGeo, materials );
-
-    /*textMesh1.position.x = centerOffset;
-    textMesh1.position.y = hover;
-    textMesh1.position.z = 0;
-    */
-   this.textMesh.position.copy(this.textposition.point).add(this.textposition.face.normal);
-   this.textMesh.rotation.x = -Math.PI/2 ;
-   this.textMesh.rotation.y = -Math.PI/2;
-   this.textMesh.rotation.z = -Math.PI/2;
-   this.state.scene.add( this.textMesh );
+    this.textMesh.position.copy(this.textposition.point)
+    this.face_camera(this.textMesh)
 
   }
-  createText = () => {
-    this.textMesh = new TextMesh();
-    this.textMesh.rotation.y = Math.PI;
-    this.state.scene.add(this.textMesh);
-    this.textMesh.material = new THREE.MeshPhongMaterial({ color: 0x056ecf });
-    this.textMesh.update({
-      text: 'Hey There :)',
-      font: require('../../assets/fonts/neue_haas_unica_pro_medium.json'), // This accepts json, THREE.Font, or a uri to remote THREE.Font json
-      size: 10, //Size of the text. Default is 100.
-      height: 5, //Thickness to extrude text. Default is 50.
-      curveSegments: 12, // — Integer. Number of points on the curves. Default is 12.
-      bevelEnabled: false, // — Boolean. Turn on bevel. Default is False.
-      bevelThickness: 1, // — Float. How deep into text bevel goes. Default is 10.
-      bevelSize: 0.8, // — Float. How far from text outline is bevel. Default is 8.
-      bevelSegments: 0.3, // — Integer. Number of bevel segments. Default is 3.
-    });
-    utils.scaleLongestSideToSize(this.textMesh, 5);
-    utils.alignMesh(this.textMesh, { y: 1, x: 0.5, z: 0.5 });
-  };
 
   render(){
     const __this = this;
@@ -301,9 +280,18 @@ export default class FloorplanEditor extends React.Component {
         const render = () => {
           requestAnimationFrame(render);
           if (this.spinLoader!=null){
-            //this.spinLoader.animate();
+            this.spinLoader.animate();
           }
-          
+          if (this.spinnerNow!=null){
+            var timeDiff = new Date() - this.spinnerNow;
+            timeDiff /= 1000;
+            if (Math.round(timeDiff%60)>3){
+              this.state.scene.remove(this.spinLoader.mesh);
+              this.create_cube(this.spinLoader.mesh.position);
+              this.spinLoader=null;
+              this.spinnerNow=null;
+            }
+          }
           update();
           gl.endFrameEXP();
         };

@@ -38,6 +38,7 @@ THREE.BallSpinerLoader = function(config) {
   // [depth] defines the amplitude
   this.animationDepth = config.animationDepth || 80;
   this.intersect = config.intersect;
+  this.camera  =config.camera;
   this.circles = [];
   this.mesh = this.initGroup();
 };
@@ -96,15 +97,15 @@ THREE.BallSpinerLoader.prototype = {
       var pos = this.polar2cartesian({ distance: this.groupRadius, radians: currAngle});
        //oneCircle.mesh.position.set(pos.x+this.intersect.point.x, pos.y+this.intersect.point.y,this.intersect.point.z ).add(this.intersect.face.normal);//currOpacity*this.animationDepth
        //oneCircle.mesh.position.set(pos.x, pos.y,currOpacity*this.animationDepth);
-       oneCircle.mesh.position.set(pos.x, pos.y,currOpacity*this.animationDepth).add(this.intersect.face.normal)
+       oneCircle.mesh.position.set(pos.x, pos.y,currOpacity*this.animationDepth)
+
       currAngle+=angleStep;
       mesh.add(oneCircle.mesh);
       this.circles.push(oneCircle);
     }
     mesh.position.copy(this.intersect.point)
-    mesh.rotation.x = -Math.PI/2 ;
-    mesh.rotation.y = -Math.PI/2;
-    mesh.rotation.z = -Math.PI/2;
+    const {x,y,z} = (typeof mesh.position=="undefined")?mesh:mesh.position;
+    mesh.rotation.y = Math.atan2( ( this.camera.position.x - x ), ( this.camera.position.z - z ) );
     return(mesh);
   },
   polar2cartesian: function(polar) {
