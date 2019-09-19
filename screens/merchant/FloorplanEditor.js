@@ -12,7 +12,11 @@ export default class FloorplanEditor extends React.Component {
   lat : 0, onMouseDownLat : 0,
   phi : 0, theta : 0,
   objects:[],
-  scene:new THREE.Scene()
+  textObjects:[],
+  texts:[],
+  selectedIndex:null,
+  scene:new THREE.Scene(),
+  text_box:"none"
   };
   cubeGeo=null;
   cubeMaterial=null;
@@ -26,6 +30,7 @@ export default class FloorplanEditor extends React.Component {
   image;
   text="hellllllll0";
   spinLoader=null;
+  frame= 0;
   constructor(props){
      super(props)
      this.image = props.navigation.getParam("image",
@@ -37,11 +42,10 @@ export default class FloorplanEditor extends React.Component {
     this.state.scene.add(voxel);
     this.state.objects.push(voxel);
   }
-  create_cube2(x,y,z){
-    var voxel = new THREE.Mesh(this.cubeGeo, this.cubeMaterial);
-    voxel.position.set(x,y,z);
-    this.state.scene.add(voxel);
-    this.state.objects.push(voxel);
+  unhighlight_cubes(){
+    this.state.objects.forEach(function(e){
+      e.material.color.setHex( 0xff0000 );
+    })
   }
   componentWillMount() {
     this.panResponder = this.buildGestures();
@@ -77,13 +81,25 @@ export default class FloorplanEditor extends React.Component {
         if (intersects.length > 0) {
           if (intersects_cube.length==0){
             var intersect = intersects[0];
-            //this.create_cube(intersect);
+            
             this.spinnerNow = new Date();
             this.spinLoader = new THREE.BallSpinerLoader({ groupRadius:20 ,intersect:intersect,camera:this.camera});
             this.state.scene.add(this.spinLoader.mesh);
+            this.unhighlight_cubes()
+            this.setState({text_box:"none"})
           }else{
-            this.textposition = intersects_cube[0];
-            this.create_text()
+            var intersect = intersects_cube[0];
+            if(this.state.objects.indexOf(intersect)==this.selectedIndex){
+              
+              intersect.object.material.color.setHex( 0xff0000 );
+              this.selectedIndex = null;
+            }else{
+              this.unhighlight_cubes()
+              intersect.object.material.color.setHex( 0x93C47D );
+              this.selectedIndex = this.state.objects.indexOf(intersect.object);
+              const text_edit = this.state.texts[this.selectedIndex]
+              this.setState({text_box:"inline"})
+            }
           }
         }
         
@@ -132,18 +148,25 @@ export default class FloorplanEditor extends React.Component {
     this.font = new THREE.Font(require("./three_fonts/neue_haas_unica_pro_medium.json"));
     
   }
-  refreshText=()=>{
-    this.state.scene.remove(this.textMesh);
-    this.create_text()
+  refresh_text=(textedit)=>{
+    if(this.selectedIndex!=null){
+      this.state.texts[this.selectedIndex] = textedit;
+      this.state.scene.remove(this.state.textObjects[this.selectedIndex])
+      const point = this.state.textObjects[this.selectedIndex].position;
+      const {text,mesh}  = this.create_text(point,textedit)
+      this.state.textObjects[this.selectedIndex] = mesh
+      this.state.scene.add(this.state.textObjects[this.selectedIndex])
+    }
+
   }
   face_camera =(mesh)=>{
     const {x,y,z} = (typeof mesh.position=="undefined")?mesh:mesh.position;
 
    mesh.rotation.y = Math.atan2( ( this.camera.position.x - x ), ( this.camera.position.z - z ) );
-   this.state.scene.add( mesh );
+   return mesh;
 
   }
-  create_text = ()=> {
+  create_text = (intersect_point,text)=> {
     const height = 2,
 				size = 20,
 				hover = 30,
@@ -157,7 +180,8 @@ export default class FloorplanEditor extends React.Component {
       new THREE.MeshPhongMaterial( { color: 0xffffff, flatShading: true } ), // front
       new THREE.MeshPhongMaterial( { color: 0xffffff } ) // side
     ];
-    var textGeo = new THREE.TextGeometry( this.text, {
+    
+    var textGeo = new THREE.TextGeometry( text, {
 
       font: this.font,
 
@@ -175,18 +199,19 @@ export default class FloorplanEditor extends React.Component {
     textGeo.computeVertexNormals();
     textGeo = new THREE.BufferGeometry().fromGeometry( textGeo );
 
-    this.textMesh = new THREE.Mesh( textGeo, materials );
-    this.textMesh.position.copy(this.textposition.point)
-    this.face_camera(this.textMesh)
+    var textMesh = new THREE.Mesh( textGeo, materials );
+    textMesh.position.copy(intersect_point)
+    return {text:text,mesh:this.face_camera(textMesh)}
 
   }
 
   render(){
     const __this = this;
       return (
+        
     <KeyboardAvoidingView
     behavior={'padding'}
-          style={{ height: '100%', flex: 1 }}>
+          style={{ height: '100%'}}>
     <GLView
       //style={{ flex: 1 }}
       {...this.panResponder.panHandlers}
@@ -226,9 +251,8 @@ export default class FloorplanEditor extends React.Component {
         var material = new THREE.MeshBasicMaterial( { map: texture } );
         var mesh1 = new THREE.Mesh(geometry,material);
         this.state.scene.add(mesh1);
-         this.cubeGeo = new THREE.BoxGeometry(50, 50, 50);
+        this.cubeGeo = new THREE.BoxGeometry(50, 50, 50);
         this.cubeMaterial =  new THREE.MeshBasicMaterial( { color: 0xff0000, opacity: 0.5, transparent: true } );
-        this.create_cube2(-125,-62,0);
         var poleGeo = new THREE.BoxGeometry(5, 375, 5);
         var poleMat = new THREE.MeshBasicMaterial({
           color: 0xffffff,
@@ -241,7 +265,6 @@ export default class FloorplanEditor extends React.Component {
         mesh2.receiveShadow = true;
         mesh2.castShadow = true;
         this.state.scene.add(mesh2);
-        this.state.objects.push(mesh2);
         const pointLight = new THREE.PointLight(0xffffff, 2, 1000, 1);
         pointLight.position.set(0, 200, 200);
         this.state.scene.add(pointLight);
@@ -282,35 +305,66 @@ export default class FloorplanEditor extends React.Component {
           if (this.spinLoader!=null){
             this.spinLoader.animate();
           }
+          
           if (this.spinnerNow!=null){
             var timeDiff = new Date() - this.spinnerNow;
-            timeDiff /= 1000;
-            if (Math.round(timeDiff%60)>3){
+              timeDiff /= 1000;
+            if (Math.round(timeDiff%60)>1.5){
               this.state.scene.remove(this.spinLoader.mesh);
               this.create_cube(this.spinLoader.mesh.position);
+              const count = this.state.textObjects.length;
+              const {text,mesh} = this.create_text(this.spinLoader.mesh.position,count.toString());
+              this.state.textObjects.push(mesh);
+              this.state.texts.push(text);
+              this.state.scene.add(mesh);
               this.spinLoader=null;
               this.spinnerNow=null;
             }
           }
+          if (this.frame>1){
+            this.frame=0;
+          }
+          
+          if (this.frame>=0&&this.frame<0.2){
+            if(this.selectedIndex!=null && this.selectedIndex>=0){
+              if(this.selectedIndex<=this.state.textObjects.length){
+                this.state.textObjects[this.selectedIndex].material.forEach(function(z){
+                  if (z.color.getHexString()!="741b47"){
+                    z.color.setHex(0x741B47);
+                  }else{
+                    z.color.setHex(0xffffff);
+                  }
+                })
+                
+              }
+            }
+          }          
+          this.frame+=0.2;
           update();
           gl.endFrameEXP();
         };
         render();
       }}
     />
-    <TextInput
+       {this.state.text_box=="inline" ? <TextInput
             style={{
               height: 40,
               borderTopColor: 'gray',
               borderTopWidth: 1,
-              width: '100%',
+              width: 60,
               fontSize: 24,
               color: '#056ECF',
               paddingHorizontal: 12,
+              position:"absolute",
+              top:100,
+              left:100,
+              backgroundColor:"#d1d1d1"
             }}
-            onChangeText={text => {this.text = text; this.refreshText()}}
-          />
-    </KeyboardAvoidingView>   
+            value={this.state.texts[this.selectedIndex]}
+            onChangeText={text => {this.refresh_text(text)}}
+          /> : null}
+    </KeyboardAvoidingView>
+    
   );
 }
 }  
