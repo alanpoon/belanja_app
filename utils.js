@@ -33,6 +33,14 @@ async function _pickImage(ipfs_add){
   }
 };
 
+function string_to_u8(str){
+  const textEncoder = new TextEncoder();
+  return textEncoder.encode(str);
+}
+function u8_to_string(v){
+  const textDecoder = new TextDecoder();
+  return textDecoder.decode(v);
+}
 /*
 async function _pickImage(ipfs_add){
   let result = await ImagePicker.launchImageLibraryAsync({
@@ -59,5 +67,7 @@ async function _pickImage(ipfs_add){
 }*/
 export {
   _retrieveData,
-  _pickImage
+  _pickImage,
+  string_to_u8,
+  u8_to_string
 }

@@ -49,6 +49,26 @@ const attestation = {
     const attestationApi = await Attestation.create(api);
     const claims = attestationApi.api.query.xPay.items(0);
     return claims;
+  },
+  addFloorplan: async(signer,acc_to_edit,item_id,image,description,ipfs,floorplan)=>{
+    const api = await createApi();
+    const attestationApi = await Attestation.create(api);
+    attestationApi.api.tx.xPay.addFloorplan(signer,acc_to_edit,item_id,image,description,ipfs,floorplan);
+  },
+  changeFloorplan: async(signer,acc_to_edit,item_id,image,description,ipfs,floorplan)=>{
+    const api = await createApi();
+    const attestationApi = await Attestation.create(api);
+    attestationApi.api.tx.xPay.changeFloorplan(signer,acc_to_edit,item_id,image,description,ipfs,floorplan);
+  },
+  removeFloorplan: async(signer,acc_to_edit,item_id)=>{
+    const api = await createApi();
+    const attestationApi = await Attestation.create(api);
+    attestationApi.api.tx.xPay.removeFloorplan(signer,acc_to_edit,item_id);
+  },
+  getFloorplan: async(item_id)=>{
+    const api = await createApi();
+    const attestationApi = await Attestation.create(api);
+    return attestationApi.api.query.xPay.floorplans(item_id);
   }
 };
 

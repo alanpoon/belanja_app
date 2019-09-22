@@ -1,8 +1,13 @@
-import { ExpoWebGLRenderingContext, GLView } from 'expo-gl';
-import { Renderer, loadTextureAsync, THREE, renderer,utils } from 'expo-three';
-import {PanResponder,PixelRatio,Dimensions,TextInput,KeyboardAvoidingView} from 'react-native';
+import { GLView } from 'expo-gl';
+import { Renderer, loadTextureAsync, THREE } from 'expo-three';
+import {PanResponder,PixelRatio,TextInput,KeyboardAvoidingView,Alert,View,Button} from 'react-native';
 import * as React from 'react';
 import './BallSpinerLoader';
+import attestation from '../../cennzapp/utils/attestation';
+import { issuer } from '../../cennzapp/utils/cennnznet';
+import jj from '../../cennzapp';
+import {string_to_u8,u8_to_string} from '../../utils';
+import { AttestationRx } from '@cennznet/crml-attestation';
 global.THREE = THREE;
 export default class FloorplanEditor extends React.Component {
   state={timeout:null,
@@ -16,10 +21,11 @@ export default class FloorplanEditor extends React.Component {
   texts:[],
   selectedIndex:null,
   scene:new THREE.Scene(),
-  text_box:"none"
+  text_box:"none",
+  floorplan_data:[]
   };
   cubeGeo=null;
-  cubeMaterial=null;
+  redCubeMaterial=null;
   width = 0;
   height = 0;
   raycaster = new THREE.Raycaster();
@@ -33,19 +39,70 @@ export default class FloorplanEditor extends React.Component {
   frame= 0;
   constructor(props){
      super(props)
+     jj();
      this.image = props.navigation.getParam("image",
-     require("../../assets/images/IMG20190914110954.jpg"))
+     require("../../assets/images/IMG20190914110954.jpg"));
+     this.description = props.navigation.getParam("description","Floormap Panoroma");
+     this.ipfs = props.navigation.getParam("ipfs","")
   }
   create_cube(intersect){
-    var voxel = new THREE.Mesh(this.cubeGeo, this.cubeMaterial);
+    var voxel = new THREE.Mesh(this.cubeGeo, this.redCubeMaterial);
     voxel.position.copy(intersect);
     this.state.scene.add(voxel);
     this.state.objects.push(voxel);
   }
+
   unhighlight_cubes(){
+    const __this = this;
     this.state.objects.forEach(function(e){
-      e.material.color.setHex( 0xff0000 );
+      e.material= __this.redCubeMaterial;
     })
+  }
+  add_cube(){
+    if(this.selectedIndex!=null){
+      this.state.scene.remove(this.state.textObjects[this.selectedIndex])
+      const point = this.state.textObjects[this.selectedIndex].position;
+      const textedit = this.state.texts[this.selectedIndex];
+      const {text,mesh}  = this.create_text(point,textedit)
+      this.state.textObjects[this.selectedIndex] = mesh
+      this.state.scene.add(this.state.textObjects[this.selectedIndex])
+      const cube_pos = this.state.objects[this.selectedIndex].position;
+      this.table_add_element(textedit,cube_pos)
+    }
+  }
+  delete_cube(){
+    if(this.selectedIndex!=null){
+        const textedit = this.state.texts[this.selectedIndex];
+        this.state.texts.splice(this.selectedIndex,1)
+        this.state.scene.remove(this.state.textObjects[this.selectedIndex])
+        this.state.textObjects.splice(this.selectedIndex,1);
+        this.state.scene.remove(this.state.objects[this.selectedIndex])
+        this.state.objects.splice(this.selectedIndex,1)
+        this.selectedIndex = null;
+        this.setState({text_box:"none"});
+        for (var i = 0;i<this.state.floorplan_data.length;i++){
+          if (this.state.floorplan_data[i][0]==textedit){
+            this.state.floorplan_data.splice(i,1);
+            break;
+          }
+        }
+    }
+  }
+  save_map(){
+    console.log("h")
+    const signer = string_to_u8(issuer.address);
+    const image = string_to_u8(this.image);
+    const description = string_to_u8(this.description);
+    const ipfs = string_to_u8(this.ipfs);
+    attestation.addFloorplan(signer,signer,image,description,ipfs,this.floorplan_data)
+    .then((z) => console.log("z",z.unwrap().toNumber()));
+  }
+  query_map(){
+    const item_id = 0;
+    attestation.getFloorplan(item_id).then((z)=> console.log("query_map",z.unwrap()))
+  }
+  table_add_element(table_num,pos){
+    this.state.floorplan_data.push([table_num,pos.x,pos.y,pos.z]);
   }
   componentWillMount() {
     this.panResponder = this.buildGestures();
@@ -91,11 +148,13 @@ export default class FloorplanEditor extends React.Component {
             var intersect = intersects_cube[0];
             if(this.state.objects.indexOf(intersect)==this.selectedIndex){
               
-              intersect.object.material.color.setHex( 0xff0000 );
+              //intersect.object.material.color.setHex( 0xff0000 );
+              intersect.object.material = this.redCubeMaterial;
               this.selectedIndex = null;
             }else{
               this.unhighlight_cubes()
-              intersect.object.material.color.setHex( 0x93C47D );
+              //intersect.object.material.color.setHex( 0x93C47D );
+              intersect.object.material = this.greenCubeMaterial;
               this.selectedIndex = this.state.objects.indexOf(intersect.object);
               const text_edit = this.state.texts[this.selectedIndex]
               this.setState({text_box:"inline"})
@@ -149,15 +208,14 @@ export default class FloorplanEditor extends React.Component {
     
   }
   refresh_text=(textedit)=>{
+    
     if(this.selectedIndex!=null){
+      
       this.state.texts[this.selectedIndex] = textedit;
-      this.state.scene.remove(this.state.textObjects[this.selectedIndex])
-      const point = this.state.textObjects[this.selectedIndex].position;
-      const {text,mesh}  = this.create_text(point,textedit)
-      this.state.textObjects[this.selectedIndex] = mesh
-      this.state.scene.add(this.state.textObjects[this.selectedIndex])
+      
+      this.table_add_element()
     }
-
+    this.setState({text_box:"inline"})
   }
   face_camera =(mesh)=>{
     const {x,y,z} = (typeof mesh.position=="undefined")?mesh:mesh.position;
@@ -252,7 +310,8 @@ export default class FloorplanEditor extends React.Component {
         var mesh1 = new THREE.Mesh(geometry,material);
         this.state.scene.add(mesh1);
         this.cubeGeo = new THREE.BoxGeometry(50, 50, 50);
-        this.cubeMaterial =  new THREE.MeshBasicMaterial( { color: 0xff0000, opacity: 0.5, transparent: true } );
+        this.redCubeMaterial =  new THREE.MeshBasicMaterial( { color: 0xff0000, opacity: 0.5, transparent: true } );
+        this.greenCubeMaterial =  new THREE.MeshBasicMaterial( { color: 0x93C47D, opacity: 0.5, transparent: true } );
         var poleGeo = new THREE.BoxGeometry(5, 375, 5);
         var poleMat = new THREE.MeshBasicMaterial({
           color: 0xffffff,
@@ -288,13 +347,7 @@ export default class FloorplanEditor extends React.Component {
           const x =  500 * Math.sin( phi ) * Math.cos( theta );
           const y =  500 * Math.cos( phi );
           const z = 500 * Math.sin( phi ) * Math.sin( theta );
-          __this.camera.lookAt(new THREE.Vector3( x, y, z ));
-          
-          /*
-          // distortion
-          camera.position.copy( camera.target ).negate();
-          */
-  
+          __this.camera.lookAt(new THREE.Vector3( x, y, z ));  
           renderer.render( __this.state.scene, __this.camera );
   
         }
@@ -346,7 +399,12 @@ export default class FloorplanEditor extends React.Component {
         render();
       }}
     />
-       {this.state.text_box=="inline" ? <TextInput
+       {this.state.text_box=="inline" ? <View style={{
+          position:"absolute",
+          top:"50%",
+          left:"50%"
+       }}><TextInput
+            keyboardType="numeric"
             style={{
               height: 40,
               borderTopColor: 'gray',
@@ -355,14 +413,38 @@ export default class FloorplanEditor extends React.Component {
               fontSize: 24,
               color: '#056ECF',
               paddingHorizontal: 12,
-              position:"absolute",
-              top:100,
-              left:100,
+
               backgroundColor:"#d1d1d1"
+              
             }}
             value={this.state.texts[this.selectedIndex]}
             onChangeText={text => {this.refresh_text(text)}}
-          /> : null}
+          /><Button
+            title="Add"
+            onPress={() => __this.add_cube()}
+          /><Button
+          title="Delete"
+          onPress={() => __this.delete_cube()}
+        />
+          </View> : null}
+          <Button
+          title="Save"
+          style={{
+            position:"absolute",
+            top:"90%",
+            left:"10%"
+          }}
+          onPress={()=>__this.save_map()}
+          />
+          <Button
+          title="Query"
+          style={{
+            position:"absolute",
+            top:"90%",
+            left:"10%"
+          }}
+          onPress={()=>__this.query_map()}
+          />
     </KeyboardAvoidingView>
     
   );
