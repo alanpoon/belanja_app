@@ -14,7 +14,7 @@ import {
 import { MonoText } from '../components/StyledText';
 import jj from '../cennzapp'
 export default function HomeScreen(props) {
-  jj();
+  //jj();
   return (
     <View style={styles.container}>
       <ScrollView

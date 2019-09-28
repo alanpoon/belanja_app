@@ -14,17 +14,23 @@
  * limitations under the License.
  */
 
-import { u8aToHex, stringToU8a } from '@cennznet/util';
-import { createApi, signAndSend } from './cennnznet';
+import { u8aToHex, stringToU8a,hexToU8a, isHex,u8aToString } from '@cennznet/util';
+import { createApi,createApiRoot, signAndSend,send } from './cennnznet';
 import { Attestation } from '@cennznet/crml-attestation';
-
 const stringToHex = str => u8aToHex(stringToU8a(str));
 
 const createAttestationApi =  async () => {
+  console.log("before wallet")
   const api = await createApi();
+  console.log("after wallet")
   return api.tx.xpay;
 };
-
+const createAttestationApiRoot =  async () => {
+  console.log("before wallet")
+  const api = await createApiRoot();
+  console.log("after wallet")
+  return api.tx.xpay;
+};
 const attestation = {  
   removeClaim: async (holder, topic) => {
     const api = await createAttestationApi();
@@ -36,39 +42,66 @@ const attestation = {
     const txHash = await signAndSend(claim);
     return txHash;
   },
-  
+  /*
   getClaims: async (holder, issuers, topics) => {
     const api = await createApi();
     const attestationApi = await Attestation.create(api);
     const claims = await attestationApi.getClaims(holder, issuers, topics);
     
     return claims;
-  },
+  },*/
   getItems: async (holder,topics) => {
     const api = await createApi();
     const attestationApi = await Attestation.create(api);
     const claims = attestationApi.api.query.xPay.items(0);
     return claims;
   },
-  addFloorplan: async(signer,acc_to_edit,item_id,image,description,ipfs,floorplan)=>{
+  addFloorplan: async(acc_to_edit,image,description,ipfs,floorplan)=>{
     const api = await createApi();
     const attestationApi = await Attestation.create(api);
-    attestationApi.api.tx.xPay.addFloorplan(signer,acc_to_edit,item_id,image,description,ipfs,floorplan);
+    attestationApi.api.tx.xpay.addFloorplan(acc_to_edit,stringToHex(image),stringToHex(description),stringToHex(ipfs),floorplan);
   },
   changeFloorplan: async(signer,acc_to_edit,item_id,image,description,ipfs,floorplan)=>{
     const api = await createApi();
     const attestationApi = await Attestation.create(api);
-    attestationApi.api.tx.xPay.changeFloorplan(signer,acc_to_edit,item_id,image,description,ipfs,floorplan);
+    attestationApi.api.tx.xpay.changeFloorplan(signer,acc_to_edit,item_id,image,description,ipfs,floorplan);
   },
   removeFloorplan: async(signer,acc_to_edit,item_id)=>{
     const api = await createApi();
     const attestationApi = await Attestation.create(api);
-    attestationApi.api.tx.xPay.removeFloorplan(signer,acc_to_edit,item_id);
+    attestationApi.api.tx.xpay.removeFloorplan(signer,acc_to_edit,item_id);
   },
   getFloorplan: async(item_id)=>{
     const api = await createApi();
     const attestationApi = await Attestation.create(api);
     return attestationApi.api.query.xPay.floorplans(item_id);
+  },
+  addClaims: async(claim)=>{
+    const api = await createAttestationApi();
+    var claimz = await api.addClaims(
+      //new H256(toHash(claim))
+      2
+    );
+    //const txHash = await signAndSend(claimz);
+    const txHash = await signAndSend(claimz);
+    return txHash;
+
+  },
+  addMsg: async(claim,claim2)=>{
+    const api = await createAttestationApi();
+    var claimz = await api.addMsg(
+      stringToHex(claim),
+      stringToHex(claim2)
+    );
+    console.log("stringToHex",stringToHex(claim))
+    const txHash = await signAndSend(claimz);
+    return txHash;
+
+  },
+  getClaims: async(item_id)=>{
+    const api = await createApi();
+    const attestationApi = await Attestation.create(api);
+    return attestationApi.api.query.xPay.msgs(item_id);
   }
 };
 

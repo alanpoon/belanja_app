@@ -11,7 +11,8 @@ export default class FloorplanUp extends Component {
     image: null,
     image_hash:null,
     advance_setting:1,
-    ipfs_add:"127.0.0.1:5001"
+    ipfs_add:"127.0.0.1:5001",
+    description:null
   };
   _pickImage(){
     const __this =this;
@@ -37,6 +38,7 @@ export default class FloorplanUp extends Component {
         <Picker.Item label="Basic" value={1} />
         <Picker.Item label="Advance" value={2} />
       </Picker>
+      <Text>Description of the image</Text><TextInput defaultValue="Location A" onChangeText={(description)=>this.setState({description})}/>
       {this.state.advance_setting == 2 && 
       <View><Text>Ipfs Address</Text><TextInput defaultValue={this.state.ipfs_add.toString()} onChangeText={(ipfs_add) => this.setState({ipfs_add})}/></View>
        }
@@ -46,10 +48,10 @@ export default class FloorplanUp extends Component {
         />
         { image && <Image source={{ uri: image }} style={{ width: 200, height: 200 }} />}
         {image && <Button title="Proceed" onPress={()=>__this.props.navigation.navigate('FloorplanEditor', {
-              width: 200,
-              height:200,
+              ipfs: this.state.ipfs_add,
+              description:this.state.description,
               //image: "http://"+ipfs_add.split(":")[0]+":8080/ipfs/"+__this.state.image_hash
-              image: this.state.image
+              image_hash: this.state.image_hash
             })}/>}
         </View>
     )

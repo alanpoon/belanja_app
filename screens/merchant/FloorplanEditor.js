@@ -5,10 +5,12 @@ import * as React from 'react';
 import './BallSpinerLoader';
 import attestation from '../../cennzapp/utils/attestation';
 import { issuer } from '../../cennzapp/utils/cennnznet';
+import { u8aToString,hexToU8a } from '@cennznet/util';
 import jj from '../../cennzapp';
-import {string_to_u8,u8_to_string} from '../../utils';
-import { AttestationRx } from '@cennznet/crml-attestation';
+import BN from 'bn.js';
 global.THREE = THREE;
+
+const hexToString = str =>u8aToString(hexToU8a(str));
 export default class FloorplanEditor extends React.Component {
   state={timeout:null,
   isUserInteracting:false,
@@ -37,9 +39,11 @@ export default class FloorplanEditor extends React.Component {
   text="hellllllll0";
   spinLoader=null;
   frame= 0;
+  
   constructor(props){
      super(props)
-     jj();
+     //jj();
+     this.image_hash = props.navigation.getParam("image_hash","hi")
      this.image = props.navigation.getParam("image",
      require("../../assets/images/IMG20190914110954.jpg"));
      this.description = props.navigation.getParam("description","Floormap Panoroma");
@@ -90,19 +94,34 @@ export default class FloorplanEditor extends React.Component {
   }
   save_map(){
     console.log("h")
-    const signer = string_to_u8(issuer.address);
-    const image = string_to_u8(this.image);
-    const description = string_to_u8(this.description);
-    const ipfs = string_to_u8(this.ipfs);
-    attestation.addFloorplan(signer,signer,image,description,ipfs,this.floorplan_data)
-    .then((z) => console.log("z",z.unwrap().toNumber()));
+    const signer = issuer.address;
+    const image = this.image_hash;
+    const description = this.description;
+    const ipfs = this.ipfs;
+    console.log("signer",signer);
+    console.log("image",image,this.image);
+    console.log("description",description);
+    console.log("ipfs",ipfs);
+    console.log("fo",this.state.floorplan_data);/*
+    attestation.addFloorplan(signer,image,description,ipfs,this.state.floorplan_data)
+    .then((z) => console.log("z",z.unwrap().toNumber()));*/
+    //attestation.addClaims("hello")
+    attestation.addMsg("hello","hello2")
+    .then((z) => console.log("z",z));
   }
   query_map(){
     const item_id = 0;
-    attestation.getFloorplan(item_id).then((z)=> console.log("query_map",z.unwrap()))
+    //attestation.getFloorplan(item_id).then((z)=> console.log("query_map",z.unwrap()))
+    //attestation.getClaims(item_id).then((z)=> console.log("query_map",z))
+    attestation.getClaims(item_id).then((z)=> {
+    const k = z.unwrap();
+    console.log("desc",hexToString(k.desc.toHex()))
+    console.log("desc1",hexToString(k.desc1.toHex()))
+    }
+    )
   }
   table_add_element(table_num,pos){
-    this.state.floorplan_data.push([table_num,pos.x,pos.y,pos.z]);
+    this.state.floorplan_data.push([table_num,new BN(pos.x),new BN(pos.y),new BN(pos.z)]);
   }
   componentWillMount() {
     this.panResponder = this.buildGestures();
