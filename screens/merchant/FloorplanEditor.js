@@ -10,7 +10,7 @@ import jj from '../../cennzapp';
 import BN from 'bn.js';
 global.THREE = THREE;
 
-const hexToString = str =>u8aToString(hexToU8a(str));
+const hexToString = str =>u8aToString(hexToU8a(str.toHex()));
 export default class FloorplanEditor extends React.Component {
   state={timeout:null,
   isUserInteracting:false,
@@ -102,26 +102,28 @@ export default class FloorplanEditor extends React.Component {
     console.log("image",image,this.image);
     console.log("description",description);
     console.log("ipfs",ipfs);
-    console.log("fo",this.state.floorplan_data);/*
+    console.log("fo",this.state.floorplan_data);
     attestation.addFloorplan(signer,image,description,ipfs,this.state.floorplan_data)
-    .then((z) => console.log("z",z.unwrap().toNumber()));*/
-    //attestation.addClaims("hello")
-    attestation.addMsg("hello","hello2")
     .then((z) => console.log("z",z));
+    //attestation.addMsg("hello","hello2")
+    //.then((z) => console.log("z",z));
   }
   query_map(){
     const item_id = 0;
     //attestation.getFloorplan(item_id).then((z)=> console.log("query_map",z.unwrap()))
     //attestation.getClaims(item_id).then((z)=> console.log("query_map",z))
-    attestation.getClaims(item_id).then((z)=> {
+    attestation.getFloorplan(item_id).then((z)=> {
     const k = z.unwrap();
-    console.log("desc",hexToString(k.desc.toHex()))
-    console.log("desc1",hexToString(k.desc1.toHex()))
+    console.log("image",hexToString(k.image))
+    console.log("description",hexToString(k.description))
+    console.log("cubes",k.cubes);
+    console.log("usize",k.cubes[0][0].toNumber())
+    console.log("i16",k.cubes[0][1].toNumber())
     }
     )
   }
   table_add_element(table_num,pos){
-    this.state.floorplan_data.push([table_num,new BN(pos.x),new BN(pos.y),new BN(pos.z)]);
+    this.state.floorplan_data.push([parseInt(table_num),Math.round(pos.x),Math.round(pos.y),Math.round(pos.z)]);
   }
   componentWillMount() {
     this.panResponder = this.buildGestures();

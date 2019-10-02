@@ -57,9 +57,12 @@ const attestation = {
     return claims;
   },
   addFloorplan: async(acc_to_edit,image,description,ipfs,floorplan)=>{
-    const api = await createApi();
-    const attestationApi = await Attestation.create(api);
-    attestationApi.api.tx.xpay.addFloorplan(acc_to_edit,stringToHex(image),stringToHex(description),stringToHex(ipfs),floorplan);
+    const api = await createAttestationApi();
+    var claimz = await api.addFloorplan(
+      acc_to_edit,stringToHex(image),stringToHex(description),stringToHex(ipfs),floorplan
+    );
+    const txHash = await signAndSend(claimz);
+    return txHash;
   },
   changeFloorplan: async(signer,acc_to_edit,item_id,image,description,ipfs,floorplan)=>{
     const api = await createApi();

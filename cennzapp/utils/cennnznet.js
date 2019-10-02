@@ -64,6 +64,12 @@ const CustomTypes = {
   'Claim':{
     'desc':'Vec<u8>',
     'desc1':'Vec<u8>'
+  },
+  'Floorplan':{
+    'image':'Vec<u8>',
+    'description':'Vec<u8>',
+    'ipfs':'Vec<u8>',
+    'cubes':'Vec<(usize,i16,i16,i16)>'
   }
 };
 const createApi = async () => {
