@@ -10,7 +10,7 @@ import jj from '../../cennzapp';
 import BN from 'bn.js';
 global.THREE = THREE;
 
-const hexToString = str =>u8aToString(hexToU8a(str.toHex()));
+const hexToString = str =>u8aToString(hexToU8a(str.toHex())).substr(1);
 export default class FloorplanEditor extends React.Component {
   state={timeout:null,
   isUserInteracting:false,
@@ -24,7 +24,7 @@ export default class FloorplanEditor extends React.Component {
   selectedIndex:null,
   scene:new THREE.Scene(),
   text_box:"none",
-  floorplan_data:[]
+  cubes:[]
   };
   cubeGeo=null;
   redCubeMaterial=null;
@@ -46,7 +46,7 @@ export default class FloorplanEditor extends React.Component {
      this.image_hash = props.navigation.getParam("image_hash","hi")
      this.image = props.navigation.getParam("image",
      require("../../assets/images/IMG20190914110954.jpg"));
-     this.description = props.navigation.getParam("description","Floormap Panoroma");
+     this.desc = props.navigation.getParam("desc","Floormap Panoroma");
      this.ipfs = props.navigation.getParam("ipfs","")
   }
   create_cube(intersect){
@@ -84,9 +84,9 @@ export default class FloorplanEditor extends React.Component {
         this.state.objects.splice(this.selectedIndex,1)
         this.selectedIndex = null;
         this.setState({text_box:"none"});
-        for (var i = 0;i<this.state.floorplan_data.length;i++){
-          if (this.state.floorplan_data[i][0]==textedit){
-            this.state.floorplan_data.splice(i,1);
+        for (var i = 0;i<this.state.cubes.length;i++){
+          if (this.state.cubes[i][0]==textedit){
+            this.state.cubes.splice(i,1);
             break;
           }
         }
@@ -96,26 +96,22 @@ export default class FloorplanEditor extends React.Component {
     console.log("h")
     const signer = issuer.address;
     const image = this.image_hash;
-    const description = this.description;
+    const desc = this.desc;
     const ipfs = this.ipfs;
     console.log("signer",signer);
     console.log("image",image,this.image);
-    console.log("description",description);
+    console.log("desc",desc);
     console.log("ipfs",ipfs);
-    console.log("fo",this.state.floorplan_data);
-    attestation.addFloorplan(signer,image,description,ipfs,this.state.floorplan_data)
-    .then((z) => console.log("z",z));
-    //attestation.addMsg("hello","hello2")
-    //.then((z) => console.log("z",z));
+    console.log("fo",this.state.cubes);
+    attestation.tx("addFloorplan",[signer,this.state.cubes,desc,image,ipfs]).then(function(){})
+
   }
   query_map(){
     const item_id = 0;
-    //attestation.getFloorplan(item_id).then((z)=> console.log("query_map",z.unwrap()))
-    //attestation.getClaims(item_id).then((z)=> console.log("query_map",z))
-    attestation.getFloorplan(item_id).then((z)=> {
+    attestation.tx("getFloorplan",[item_id]).then((z)=> {
     const k = z.unwrap();
     console.log("image",hexToString(k.image))
-    console.log("description",hexToString(k.description))
+    console.log("desc",hexToString(k.desc))
     console.log("cubes",k.cubes);
     console.log("usize",k.cubes[0][0].toNumber())
     console.log("i16",k.cubes[0][1].toNumber())
@@ -123,7 +119,7 @@ export default class FloorplanEditor extends React.Component {
     )
   }
   table_add_element(table_num,pos){
-    this.state.floorplan_data.push([parseInt(table_num),Math.round(pos.x),Math.round(pos.y),Math.round(pos.z)]);
+    this.state.cubes.push([parseInt(table_num),Math.round(pos.x),Math.round(pos.y),Math.round(pos.z)]);
   }
   componentWillMount() {
     this.panResponder = this.buildGestures();

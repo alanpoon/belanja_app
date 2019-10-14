@@ -1,12 +1,18 @@
-import React, {Component,styled} from "react";
+import React, {Component} from "react";
 import {Button, View,Image,Picker,Text,TextInput} from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
 import * as Utils from '../../utils';
 import ItemCard from '../ItemCard';
 import attestation from "../../cennzapp/utils/attestation";
+import {issuer} from "../../cennzapp/utils/cennnznet";
 import BN from 'bn.js';
+import styled from "styled-components";
 //import { TextInput } from "react-native-gesture-handler";
 //
+import { u8aToHex, stringToU8a,hexToU8a, isHex,u8aToString } from '@cennznet/util';
+const stringToHex = str => u8aToHex(stringToU8a(str));
+const hexToString = str =>u8aToString(hexToU8a(str.toHex())).substr(1);
+const oldhexToString = str =>u8aToString(hexToU8a(str.toHex()));
 const ActionWrapper = styled.div`
   margin-top: 10px;
   padding-bottom: 10px;
@@ -15,49 +21,101 @@ const ActionWrapper = styled.div`
     display: inline-block;
   }
 `;
-const assets = [
-  {
-    text: '16000: CENNZ-T',
-    value: 16000
-  },
-  {
-    text: '16001: CENTRAPAY-T',
-    value: 16001
-  }
-];
-class ItemIDLabel extends Component{
-  render(){
-    const { itemId } = this.props;
-    return attestation.getItems(itemId)
-  }
-}
+
 export default class FloorMenuUp extends Component {
   state = {
-    item: items[0].value,
-    quantity: new BN(1),
-    asset: assets[0].value,
-    price: new BN(0),
-    updatePrice: new BN(0),
+    item: null,
     itemId: 0,
-    image: "",
-    ipfs: ""
+    create:{
+      desc:"",
+      floormapId:0,
+      image:"",
+      ipfs:"",
+      price:new BN(0)
+    },
+    add:{
+      itemId:0,
+      floormapId:0
+    },
+    remove:{
+      itemId:0,
+      floormapId:0,
+    },
+    update:{
+      itemId:0,
+      desc:"",
+      floormapId:0,
+      image:"",
+      ipfs:"",
+      price:new BN(0)
+    },
+    itemIds_arr:[],
+    floormapIds_arr:[],
+    items_arr:[],
+    floormaps_arr:[]
   };
+  constructor(props){
+    super(props)
+    this.state.create['ipfs'] = props.navigation.getParam("default_ipfs","127.0.0.1:5001")
+  }
+  componentDidMount(){
+    const __this= this;
+    attestation.queryMulti([["ownerItemIds",issuer.address],["ownerFloormapIds",issuer.address]]).then(function(values){
+    
+      var ownerItems = values[0].map(function(v){
+        var id = v.toNumber();
+        return ["items",id];
+      });
+      
+      var floorItems =values[1].map(function(v){
+        var id = v.toNumber();
+        return ["floorplans",id];
+      })
+      console.log("ownerItems",ownerItems);
+      __this.setState({"itemIds_arr":ownerItems,"floormapIds_arr":floorItems})
+      Promise.all([attestation.queryMulti(ownerItems),attestation.queryMulti(floorItems)]).then(function(b_values){
+        
+        var items =[]; var floormap_items =[];
+        b_values[0].forEach(function(k){
+          let j = k.unwrap();
+          let m ={
+            image:hexToString(j.image),
+            ipfs:hexToString(j.ipfs),
+            desc:hexToString(j.desc)
+          };
+          items.push(m);
+        })
+        b_values[1].forEach(function(k){
+          let j = k.unwrap();
+          
+          let m ={
+            image:hexToString(j.image),
+            ipfs:hexToString(j.ipfs),
+            desc:hexToString(j.desc)
+          };
+          floormap_items.push(m);
+        })
+        console.log("items_arr",items);
+        console.log("floormaps_arr",floormap_items);
+        __this.setState({"items_arr":items,"floormaps_arr":floormap_items})
+      })
+    })
+
+  }
   onItemChange = (item) => {
     this.setState({ item });
-  }
-
-  onQuantityChange = (quantity) => {
-    this.setState({ quantity: quantity || new BN(1) });
-  }
-
-  onAssetChange = (asset) => {
-    this.setState({ asset });
   }
 
   onPriceChange = (price) => {
     this.setState({ price: price || new BN(0) });
   }
-
+  onGChange = (type,field,value)=>{
+    var n = this.state[type];
+    n[field]=value;
+    var obj={};
+    obj[type]=n;
+    this.setState(obj);
+  }
   onUpdatePriceChange = (price) => {
     this.setState({ updatePrice: price || new BN(0) });
   }
@@ -67,50 +125,50 @@ export default class FloorMenuUp extends Component {
   }
   _pickImage(){
     const __this =this;
-    Utils._pickImage(this.state.ipfs_add).then(function(value){
-      console.log("hash",value);
-      __this.setState({image:value.uri,image_hash:value.hash});
+    Utils._pickImage(this.state.create.ipfs).then(function(value){
+      var create = this.state.create;
+      create["ipfs"] = value.hash;
+      __this.setState({create:create});
     })
   }
   createItem(){
-    const {item, price,ipfs,image} = this.state;
-    attestation.createItem(item,price,ipfs,image); //return itemId
+    const {desc,image, price,ipfs} = this.state.create;
+    console.log("Create",this.state.create);
+    attestation.tx("createItem",[stringToHex(desc),stringToHex(image),stringToHex(ipfs),16001,price]).then(function(){})
   }
   addItem(){
-    const {itemId,floormapitemid} =this.state;
-    attestation.addItem(itemId,floormapitemid);
+    const {itemId,floormapitemid} =this.state.add;
+    attestation.tx("addItem",[itemId,floormapitemid]).then(function(){})
   }
   removeItem(){
-    const {itemId,floormapitemid} = this.state;
-    attestation.removeItem(itemId,floormapitemid);
+    const {itemId,floormapitemid} = this.state.remove;
+    attestation.tx("removeItem",[itemId,floormapitemid]);
   }
   updateItem(){
-    const {itemId,price,ipfs,image} = this.state;
-    attestation.updateItem(itemId,price,ipfs,image);
+    const {itemId,desc,price,ipfs,image} = this.state.update;
+    attestation.tx("updateItem",[itemId,desc,16001,price,image,ipfs])
   }
   _saveImage(){
 
   }
   render(){
-    const { accountId, itemsCount } = this.props;
-    const { item, quantity, asset, price, updatePrice, itemId,accountId } = this.state;
-    const itemIds = []; const floormapitemIds =[];
-    const items = attestation.items(accountId);
-    const floormapItems = attestation.floormaps(accountId);
-    const itemPickerItems =[];
-    for (let i = 0; i < items.length; ++i) {
-      const itemLabel = <ItemIDLabel key={i} itemId={items[i]}/>
-      itemIds.push({
-        text: itemLabel,
-        value: i
-      });
-      itemPickerItems.push(
-        <Picker.Item label={itemLabel} value={i}/>
+    
+    const {  price, updatePrice, itemId,accountId,image,itemIds_arr,floormapIds_arr,items_arr,floormaps_arr } = this.state;
+    const itemPicker =[]; const floormapPicker=[];
+    
+    for (let i = 0; i < items_arr.length; ++i) {
+      console.log("mm",items_arr[i].desc,"items",itemIds_arr[i][1]);
+      itemPicker.push(
+        <Picker.Item key={i} label={items_arr[i].desc} value={itemIds_arr[i][1]}/>
+        //<Picker.Item key={i} label={items_arr[i].desc} value={itemIds_arr[i][1].toString()}/>
+      );
+    }
+    /*
+    for (let i =0; i<floormapIds_arr.length; ++i){
+      floormapPicker.push(
+        <Picker.Item label={<ItemIDLabel key={i} itemId={i} type="floormap" />} value={floormapIds_arr[i]} />
       )
-    }
-    for (let i =0; i<floormapItems.length; ++i){
-      itemPickerItems.push()
-    }
+    }*/
     const __this = this;
     return (
       <section>
@@ -120,12 +178,19 @@ export default class FloorMenuUp extends Component {
           </summary>
           <div className='ui--row'>
             Description
-            <TextInput  onChangeText={this.onDescriptionChange}/>
+            <TextInput  onChangeText={(v)=>this.onGChange("create","desc",v)}/>
           </div>
           <div className='ui--row'>
             Price
             <TextInput
-              onChangeText={this.onPriceChange}
+              onChangeText={(v)=>this.onGChange("create","price",v)}
+            />
+          </div>
+          <div className='ui--row'>
+            IPFS
+            <TextInput
+              onChangeText={(v)=>this.onGChange("create","ipfs",v)}
+              value={this.state.create.ipfs}
             />
           </div>
           <div className='ui--row'>
@@ -139,7 +204,7 @@ export default class FloorMenuUp extends Component {
           </div>
           <div className='large'>
             <Button
-              label='Create Item'
+              title='Create Item'
               onPress={() => __this.createItem()}
             />
           </div>
@@ -151,26 +216,26 @@ export default class FloorMenuUp extends Component {
           <div className='ui--row'>
             Item:
             <Picker
-              selectedValue={itemId}
+              selectedValue={this.state.add.itemId}
               onValueChange={(itemValue, itemIndex) =>
-                this.setState({itemId: itemValue})
+                this.onGChange("add","itemId",itemValue)
               }>
-              {itemPickerItems}
+              {itemPicker}
             </Picker>
           </div>
           <div className='ui--row'>
             Floormap:
             <Picker
-              selectedValue={floormapitemId}
+              selectedValue={this.state.add.floormapId}
               onValueChange={(itemValue, itemIndex) =>
-                this.setState({floormapitemId: itemValue})
+                this.onGChange("add","floormapId",itemValue)
               }>
-              {floormapPickerItems}
+              {floormapPicker}
             </Picker>
           </div>
           <div className='large'>
             <Button
-              label='Add Item'
+              title='Add Item'
               onPress={() => __this.addItem()}
             />
           </div>
@@ -180,22 +245,28 @@ export default class FloorMenuUp extends Component {
             <h2>Remove Item</h2>
           </summary>
           <div className='ui--row'>
-            <Dropdown
-              value={itemId}
-              label='Item ID'
-              options={itemIds}
-              onChange={this.onItemIdChange}
-            />
-            <TextInput
-              value={quantity}
-              label='Remove Quantity'
-              onChange={this.onQuantityChange}
-              
-            />
+            Item:
+            <Picker
+              selectedValue={this.state.remove.itemId}
+              onValueChange={(itemValue, itemIndex) =>
+                this.onGChange("remove","itemId",itemValue)
+              }>
+              {itemPicker}
+            </Picker>
+          </div>
+          <div className='ui--row'>
+            Floormap:
+            <Picker
+              selectedValue={this.state.remove.floormapId}
+              onValueChange={(itemValue, itemIndex) =>
+                this.onGChange("remove","floormapId",itemValue)
+              }>
+              {floormapPicker}
+            </Picker>
           </div>
           <div className='large'>
               <Button
-                label='Add Item'
+                title='Remove Item'
                 onPress={() => __this.removeItem()}
               />
           </div>
@@ -205,35 +276,45 @@ export default class FloorMenuUp extends Component {
             <h2>Update Item</h2>
           </summary>
           <div className='ui--row'>
-            <Dropdown
-              value={itemId}
-              label='Item ID'
-              options={itemIds}
-              onChange={this.onItemIdChange}
-            />
+            Item:
+            <Picker
+              selectedValue={this.state.update.itemId}
+              onValueChange={(itemValue, itemIndex) =>
+                this.onGChange("update","itemId",itemValue)
+              }>
+              {itemPicker}
+            </Picker>
+          </div>
+          <div className='ui--row'>
+            Description
+            <TextInput  onChangeText={(v)=>this.onGChange("update","desc",v)}/>
+          </div>
+          <div className='ui--row'>
+            Price
             <TextInput
-              value={quantity}
-              label='Quantity'
-              onChange={this.onQuantityChange}
+              onChangeText={(v)=>this.onGChange("update","price",v)}
             />
           </div>
           <div className='ui--row'>
-            <Dropdown
-              value={asset}
-              label='Asset'
-              options={assets}
-              onChange={this.onAssetChange}
-            />
+            IPFS
             <TextInput
-              label='Price'
-              onChange={this.onUpdatePriceChange}
+              onChangeText={(v)=>this.onGChange("update","ipfs",v)}
             />
           </div>
+          <div className='ui--row'>
+            { image && <Image source={{ uri: image }} style={{ width: 200, height: 200 }} />}
+          </div>
+          <div className='ui--row'>
+          <Button
+            title="Select Image"
+            onPress={__this._pickImage.bind(__this)}
+          />
+          </div>
           <div className='large'>
-              <Button
-                label='Update Item'
-                onPress={() => __this.updateItem()}
-              />
+            <Button
+              title='Update Item'
+              onPress={() => __this.updateItem()}
+            />
           </div>
         </ActionWrapper>
       </section>

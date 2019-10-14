@@ -1,4 +1,5 @@
-import React, {Component,styled} from "react";
+import React, {Component} from "react";
+import styled from "styled-components";
 import {Button, View,Image,Picker,Text,TextInput} from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
 import * as Utils from '../../utils';

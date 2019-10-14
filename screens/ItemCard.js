@@ -1,7 +1,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import {Button} from 'react-native';
-import { formatBalance } from '@polkadot/util';
+import { formatBalance } from '@cennznet/util';
 import { assetRegistry } from '@cennznet/crml-generic-asset';
 import attestation from '../cennzapp/utils/attestation';
 const Wrapper = styled.div`
@@ -68,4 +68,5 @@ export default class ItemCard extends React.Component {
       </ItemDescWrapper>
     </Wrapper>
   );
-};
+  }
+}

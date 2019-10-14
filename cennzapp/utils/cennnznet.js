@@ -55,7 +55,6 @@ const generateWallet = async () => {
   return wallet;
 };
 const CustomTypes = {
-  'Item': 'u32',
   'ItemId': 'u64',
   'AssetId': 'u32',
   'AssetIdOf': 'u32',
@@ -70,6 +69,12 @@ const CustomTypes = {
     'description':'Vec<u8>',
     'ipfs':'Vec<u8>',
     'cubes':'Vec<(usize,i16,i16,i16)>'
+  },
+  'Item':{
+    'desc':'Vec<u8>',
+    'image':'Vec<u8>',
+    'ipfs': 'Vec<u8>'
+
   }
 };
 const createApi = async () => {

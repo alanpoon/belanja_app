@@ -33,7 +33,15 @@ export default function HomeScreen(props) {
           title="Go to Floorplan"
           onPress={() =>
             props.navigation.navigate('FloorplanUp', {
-              greeting: 'Hallo',
+              default_ipfs: '127.0.0.1:5001',
+            })
+          }
+        />
+        <Button
+          title="Go to Foodmenu"
+          onPress={() =>
+            props.navigation.navigate('FoodMenuUp', {
+              default_ipfs: '127.0.0.1:5001',
             })
           }
         />

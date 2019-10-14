@@ -105,6 +105,28 @@ const attestation = {
     const api = await createApi();
     const attestationApi = await Attestation.create(api);
     return attestationApi.api.query.xPay.msgs(item_id);
+  },
+  query: async(z,x)=>{
+    const api = await createApi();
+    const attestationApi = await Attestation.create(api);
+    console.log("attestationApi",attestationApi.api.query.xPay);
+    return attestationApi.api.query.xPay[z](...x);
+  },
+  queryMulti: async(z)=>{
+    const api = await createApi();
+    const attestationApi = await Attestation.create(api);
+    var j = z.map(function(n){
+      n[0] = attestationApi.api.query.xPay[n[0]];
+      return n;
+    });
+    return attestationApi.api.queryMulti(j);
+  },
+  tx: async(z,x)=>{
+    const api = await createAttestationApi();
+    var claimz = await api[z](
+      ...x
+    );
+    signAndSend(claimz)
   }
 };
 
