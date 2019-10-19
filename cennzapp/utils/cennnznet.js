@@ -65,10 +65,10 @@ const CustomTypes = {
     'desc1':'Vec<u8>'
   },
   'Floorplan':{
-    'image':'Vec<u8>',
+    'cubes':'Vec<(usize,i16,i16,i16)>',
     'description':'Vec<u8>',
-    'ipfs':'Vec<u8>',
-    'cubes':'Vec<(usize,i16,i16,i16)>'
+    'image':'Vec<u8>',
+    'ipfs':'Vec<u8>'
   },
   'Item':{
     'desc':'Vec<u8>',

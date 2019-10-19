@@ -32,7 +32,16 @@ async function _pickImage(ipfs_add){
     return "error"
   }
 };
-
+async function _getImage(ipfs_add,ipfs_hash){
+  var ipfs = new IPFS({host:ipfs_add.split(":")[0],port: ipfs_add.split(":")[1], protocol: 'http'} )
+  try {
+    const result = await ipfs.cat(ipfs_hash);
+    console.log("l",result);
+    return result;
+  } catch (e){
+    return "error"
+  }
+};
 function string_to_u8(str){
   const textEncoder = new TextEncoder();
   return textEncoder.encode(str);
@@ -68,6 +77,7 @@ async function _pickImage(ipfs_add){
 export {
   _retrieveData,
   _pickImage,
+  _getImage,
   string_to_u8,
   u8_to_string
 }

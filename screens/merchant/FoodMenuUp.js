@@ -1,5 +1,5 @@
 import React, {Component} from "react";
-import {Button, View,Image,Picker,Text,TextInput} from 'react-native';
+import {Button, View,Image,Picker,Text,TextInput,ScrollView} from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
 import * as Utils from '../../utils';
 import ItemCard from '../ItemCard';
@@ -12,7 +12,7 @@ import styled from "styled-components";
 import { u8aToHex, stringToU8a,hexToU8a, isHex,u8aToString } from '@cennznet/util';
 const stringToHex = str => u8aToHex(stringToU8a(str));
 const hexToString = str =>u8aToString(hexToU8a(str.toHex())).substr(1);
-const oldhexToString = str =>u8aToString(hexToU8a(str.toHex()));
+
 const ActionWrapper = styled.div`
   margin-top: 10px;
   padding-bottom: 10px;
@@ -85,6 +85,7 @@ export default class FloorMenuUp extends Component {
           };
           items.push(m);
         })
+        console.log("b_values[1]",b_values[1]);
         b_values[1].forEach(function(k){
           let j = k.unwrap();
           
@@ -126,15 +127,17 @@ export default class FloorMenuUp extends Component {
   _pickImage(){
     const __this =this;
     Utils._pickImage(this.state.create.ipfs).then(function(value){
-      var create = this.state.create;
-      create["ipfs"] = value.hash;
-      __this.setState({create:create});
+      var create = __this.state.create;
+      create["image"] = value.hash;
+      console.log("create",create);
+      __this.setState({create:create,image:value.uri});
     })
   }
   createItem(){
     const {desc,image, price,ipfs} = this.state.create;
-    console.log("Create",this.state.create);
-    attestation.tx("createItem",[stringToHex(desc),stringToHex(image),stringToHex(ipfs),16001,price]).then(function(){})
+    console.log("create image",image)
+    console.log("Create",this.state.create,stringToHex(image));
+    attestation.tx("createItem",[stringToHex(desc),16001,price,stringToHex(image),stringToHex(ipfs)]).then(function(){})
   }
   addItem(){
     const {itemId,floormapitemid} =this.state.add;
@@ -153,7 +156,7 @@ export default class FloorMenuUp extends Component {
   }
   render(){
     
-    const {  price, updatePrice, itemId,accountId,image,itemIds_arr,floormapIds_arr,items_arr,floormaps_arr } = this.state;
+    const {  price, updatePrice, itemId,accountId,create,image,itemIds_arr,floormapIds_arr,items_arr,floormaps_arr } = this.state;
     const itemPicker =[]; const floormapPicker=[];
     
     for (let i = 0; i < items_arr.length; ++i) {
@@ -163,14 +166,15 @@ export default class FloorMenuUp extends Component {
         //<Picker.Item key={i} label={items_arr[i].desc} value={itemIds_arr[i][1].toString()}/>
       );
     }
-    /*
+    
     for (let i =0; i<floormapIds_arr.length; ++i){
       floormapPicker.push(
-        <Picker.Item label={<ItemIDLabel key={i} itemId={i} type="floormap" />} value={floormapIds_arr[i]} />
+        <Picker.Item key={i} label={floormapIds_arr[i].desc} value={floormapIds_arr[i][1]}/>
       )
-    }*/
+    }
     const __this = this;
     return (
+      <ScrollView vertical={true}>
       <section>
         <ActionWrapper>
           <summary>
@@ -318,6 +322,7 @@ export default class FloorMenuUp extends Component {
           </div>
         </ActionWrapper>
       </section>
+      </ScrollView>
     )
   }
 }

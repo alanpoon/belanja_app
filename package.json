@@ -66,6 +66,7 @@
     "react-dom": "^16.8.6",
     "react-native": "https://github.com/expo/react-native/archive/sdk-34.0.0.tar.gz",
     "react-native-crypto": "^2.2.0",
+    "react-native-flexi-radio-button": "^0.2.2",
     "react-native-gesture-handler": "^1.4.1",
     "react-native-level-fs": "^3.0.0",
     "react-native-os": "^1.0.1",

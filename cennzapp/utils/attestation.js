@@ -127,6 +127,7 @@ const attestation = {
       ...x
     );
     signAndSend(claimz)
+    console.log("after send");
   }
 };
 
