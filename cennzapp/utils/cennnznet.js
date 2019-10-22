@@ -66,7 +66,7 @@ const CustomTypes = {
   },
   'Floorplan':{
     'cubes':'Vec<(usize,i16,i16,i16)>',
-    'description':'Vec<u8>',
+    'desc':'Vec<u8>',
     'image':'Vec<u8>',
     'ipfs':'Vec<u8>'
   },

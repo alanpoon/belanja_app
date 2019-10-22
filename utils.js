@@ -25,7 +25,7 @@ async function _pickImage(ipfs_add){
   var ipfs = new IPFS({host:ipfs_add.split(":")[0],port: ipfs_add.split(":")[1], protocol: 'http'} ) // leaving out the arguments will default to these values
   
   try {
-    const l = await ipfs.add(Buffer.from(result.uri, 'base64'));
+    const l = await ipfs.add(result.uri);
     console.log("l",l);
     return {uri:result.uri,hash:l};
   } catch (e){
@@ -39,7 +39,7 @@ async function _getImage(ipfs_add,ipfs_hash){
     console.log("l",result);
     return result;
   } catch (e){
-    return "error"
+    return e
   }
 };
 function string_to_u8(str){
