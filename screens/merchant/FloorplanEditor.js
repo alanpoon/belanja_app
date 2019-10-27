@@ -43,8 +43,8 @@ export default class FloorplanEditor extends React.Component {
   constructor(props){
      super(props)
      //jj();
-     this.image_hash = props.navigation.getParam("image_hash","hi")
-     this.image = props.navigation.getParam("image",
+     this.image = props.navigation.getParam("image","hi")
+     this.image_uri = props.navigation.getParam("image_uri",
      require("../../assets/images/IMG20190914110954.jpg"));
      this.desc = props.navigation.getParam("desc","Floormap Panoroma");
      this.ipfs = props.navigation.getParam("ipfs","")
@@ -95,7 +95,7 @@ export default class FloorplanEditor extends React.Component {
   save_map(){
     console.log("h")
     const signer = issuer.address;
-    const image = this.image_hash;
+    const image = this.image;
     const desc = this.desc;
     const ipfs = this.ipfs;
     console.log("signer",signer);
@@ -279,7 +279,7 @@ export default class FloorplanEditor extends React.Component {
     return {text:text,mesh:this.face_camera(textMesh)}
 
   }
-
+  
   render(){
     const __this = this;
       return (
@@ -321,8 +321,8 @@ export default class FloorplanEditor extends React.Component {
 				// invert the geometry on therenderer x-axis so that all of the faces point inward
         //geometry.scale( -1, 1, 1 );
         geometry.scale( 1, -1, 1 );
-        const texture = await loadTextureAsync({asset:this.image});
-        console.log("texture",this.image)
+        const texture = await loadTextureAsync({asset:this.image_uri});
+        console.log("texture",this.image_uri)
         var material = new THREE.MeshBasicMaterial( { map: texture } );
         var mesh1 = new THREE.Mesh(geometry,material);
         this.state.scene.add(mesh1);
