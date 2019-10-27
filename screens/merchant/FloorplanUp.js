@@ -19,7 +19,8 @@ export default class FloorplanUp extends Component {
     cubes:[],
     floormap_items:[],
     editorVisible:false,
-    removerVisible:false
+    removerVisible:false,
+    selected_floormap_id:null
   };
 
   _pickImage(){
@@ -51,7 +52,7 @@ export default class FloorplanUp extends Component {
       }
     }
     console.log("desc",desc);
-    this.setState({removerVisible:true,desc})
+    this.setState({removerVisible:true,desc,selected_floormap_id:floormap_id})
   }
   edit(floormap_id){
     var image,desc,ipfs,cubes,image_uri;
@@ -65,7 +66,7 @@ export default class FloorplanUp extends Component {
       }
     }
 
-    this.setState({editorVisible:true,editorType:"edit",image,desc,ipfs,cubes,image_uri})
+    this.setState({editorVisible:true,editorType:"edit",image,desc,ipfs,cubes,image_uri,selected_floormap_id:floormap_id})
   }
 
   add_floormap(){
@@ -76,6 +77,22 @@ export default class FloorplanUp extends Component {
       __this.refresh();
     })
   }
+  edit_floormap(){
+    const signer = issuer.address;
+    const {desc,image,ipfs,selected_floormap_id} = this.state;
+    const __this =this;
+    attestation.tx("changeFloorplan",[signer,selected_floormap_id,[],desc,image,ipfs]).then(function(){
+      __this.refresh();
+    })
+  }
+  remove_floormap(){
+    const signer = issuer.address;
+    const {selected_floormap_id} = this.state;
+    const __this =this;
+    attestation.tx("removeFloorplan",[signer,selected_floormap_id]).then(function(){
+      __this.refresh();
+    })
+  }
   refresh(){
     const __this= this;
     attestation.query("ownerFloormapIds",[issuer.address]).then(function(values){
@@ -83,21 +100,24 @@ export default class FloorplanUp extends Component {
       var floorItems =values.map(function(v){
         var id = v.toNumber();
         return ["floorplans",id];
-      })
+      });
+      console.log("floorItems",floorItems)
       attestation.queryMulti(floorItems).then(function(b_values){
         var floormap_items =[];
         var floormap_promise =[];
         b_values.forEach(function(k,i){
-          let j = k.unwrap();
-          let m ={
-            cubes:j.cubes,
-            image:hexToString(j.image),
-            ipfs:hexToString(j.ipfs),
-            desc:hexToString(j.desc),
-            id:floorItems[i][1]
-          };
-          floormap_promise.push(Utils._getImage(m.ipfs,m.image));
-          floormap_items.push(m);
+          if (k.isSome ==true){
+            let j = k.unwrap();
+            let m ={
+              cubes:j.cubes,
+              image:hexToString(j.image),
+              ipfs:hexToString(j.ipfs),
+              desc:hexToString(j.desc),
+              id:floorItems[i][1]
+            };
+            floormap_promise.push(Utils._getImage(m.ipfs,m.image));
+            floormap_items.push(m);
+          } 
         })
         Promise.all(floormap_promise).then(function(values){
           floormap_items.map(function(k,i){
@@ -138,17 +158,17 @@ export default class FloorplanUp extends Component {
       <Button title="close" onPress={()=>__this.setState({editorVisible:false,desc:null,cubes:[],image_uri:null})} />
     </View>)
   }
-  floormap_remover(floormap_id){
+  floormap_remover(){
     const __this =this;
     var image_uri,desc;
     for (var i=0;i<this.state.floormap_items.length;i++){
-      if (this.state.floormap_items[i]==floormap_id){
+      if (this.state.floormap_items[i].id==this.state.selected_floormap_id){
         image_uri = this.state.floormap_items[i]["image_uri"];
         desc= this.state.floormap_items[i]["desc"];
       }
     }
     return (<View style={{ flex: 1 }}>
-      <Text>Are you sure you want to remove {floormap_id}?</Text>
+      <Text>Are you sure you want to remove {this.state.selected_floormap_id}?</Text>
       <Text>Description of the image: {desc}</Text>
       { image_uri && <Image source={{ uri: image_uri }} style={{ width: 200, height: 200 }} />}
       {image_uri && <Button title="Remove" onPress={()=>__this.remove_floormap()}/>}
