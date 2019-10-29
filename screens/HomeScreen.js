@@ -45,6 +45,13 @@ export default function HomeScreen(props) {
             })
           }
         />
+        <Button
+          title="Go to Profile"
+          onPress={() =>
+            props.navigation.navigate('Profile', {
+            })
+          }
+        />
         </View>
 
         <View style={styles.getStartedContainer}>

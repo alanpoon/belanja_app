@@ -1,5 +1,6 @@
 import React, {Component} from "react";
-import {Button, View,Image,Picker,Text,TextInput,TouchableHighlight} from 'react-native';
+import {Button, View,Image,Picker,Text,TextInput,ScrollView} from 'react-native';
+import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
 import * as WebBrowser from 'expo-web-browser';
 import * as Utils from '../../utils';
 import attestation from "../../cennzapp/utils/attestation";
@@ -10,11 +11,12 @@ import Modal from "modal-react-native-web"
 import { u8aToHex, stringToU8a,hexToU8a, isHex,u8aToString } from '@cennznet/util';
 const stringToHex = str => u8aToHex(stringToU8a(str));
 const hexToString = str =>u8aToString(hexToU8a(str.toHex())).substr(1);
+const default_ipfs = "127.0.0.1:5001";
 export default class FloorplanUp extends Component {
   state = {
     image: null,
     advance_setting:1,
-    ipfs_add:"127.0.0.1:5001",
+    ipfs:default_ipfs,
     desc:null,
     cubes:[],
     floormap_items:[],
@@ -25,23 +27,33 @@ export default class FloorplanUp extends Component {
 
   _pickImage(){
     const __this =this;
-    Utils._pickImage(this.state.ipfs_add).then(function(value){
+    Utils._pickImage(this.state.ipfs).then(function(value){
       console.log("hash",value);
-      __this.setState({image:value.uri,image:value.hash});
+      __this.setState({image_uri:value.uri,image:value.hash});
     })
   }
 
-  proceed(){ //before putting creating floorplan
+  proceed(floormap_id){ //before putting creating floorplan
+    var image,desc,ipfs,cubes,image_uri;
+    for (var i=0;i<this.state.floormap_items.length;i++){
+      if(this.state.floormap_items[i]['id']==floormap_id){
+        image=this.state.floormap_items[i]['image'];
+        desc=this.state.floormap_items[i]['desc'];
+        ipfs = this.state.floormap_items[i]['ipfs'];
+        cubes = this.state.floormap_items[i]['cubes'];
+        image_uri = this.state.floormap_items[i]["image_uri"];
+      }
+    }
     this.props.navigation.navigate('FloorplanEditor', {
-      cubes: this.state.cubes,
-      ipfs: this.state.ipfs_add,
-      desc:this.state.desc,
-      image: this.state.image,
-      image_uri: this.state.image_uri
+      cubes: cubes,
+      ipfs: ipfs,
+      desc:desc,
+      image: image,
+      image_uri: image_uri
     })
   }
   add(){
-    this.setState({editorVisible:true,editorType:"add",desc:"Location A",image:null,ipfs:null,cubes:[]})
+    this.setState({editorVisible:true,editorType:"add",desc:"Location A",image:null,ipfs:default_ipfs,cubes:[],image_uri:null})
   }
   remove(floormap_id){
     console.log("floormap_id_arr",this.state.floormapIds_arr,"floormap_id",floormap_id)
@@ -119,12 +131,24 @@ export default class FloorplanUp extends Component {
             floormap_items.push(m);
           } 
         })
-        Promise.all(floormap_promise).then(function(values){
-          floormap_items.map(function(k,i){
-            return k["image_uri"]=values[i];
+        if (floormap_promise.length>0){
+          Promise.all(floormap_promise).then(function(values){
+            floormap_items.map(function(k,i){
+              return k["image_uri"]=values[i];
+            })
+            Promise.all(floormap_promise).then(function(values){
+              floormap_items.map(function(k,i){
+                return k["image_uri"]=values[i];
+              })
+              console.log("here");
+              __this.setState({floormap_items:floormap_items,editorVisible:false,removerVisible:false,editVisible:false})
+            })
           })
-          __this.setState({floormap_items:floormap_items,addVisible:false,removerVisible:false,editVisible:false})
-        })
+        }else{
+          console.log("here2");
+          __this.setState({floormap_items:floormap_items,editorVisible:false,removerVisible:false,editVisible:false})
+        }
+        
       })
     })
   }
@@ -145,16 +169,42 @@ export default class FloorplanUp extends Component {
         <Picker.Item label="Advance" value={2} />
       </Picker>
       <Text>Description of the image</Text><TextInput defaultValue={this.state.desc} onChangeText={(desc)=>this.setState({desc})}/>
+      <Text>Address</Text>
+      <GooglePlacesAutocomplete
+          placeholder='Enter Location'
+          minLength={2}
+          autoFocus={false}
+          returnKeyType={'default'}
+          fetchDetails={true}
+          styles={{
+            textInputContainer: {
+              backgroundColor: 'rgba(0,0,0,0)',
+              borderTopWidth: 0,
+              borderBottomWidth:0
+            },
+            textInput: {
+              marginLeft: 0,
+              marginRight: 0,
+              height: 38,
+              color: '#5d5d5d',
+              fontSize: 16
+            },
+            predefinedPlacesDescription: {
+              color: '#1faadb'
+            },
+          }}
+          currentLocation={false}
+        />
         {this.state.advance_setting == 2 && 
-        <View><Text>Ipfs Address</Text><TextInput defaultValue={this.state.ipfs_add.toString()} onChangeText={(ipfs_add) => this.setState({ipfs_add})}/></View>
+        <View><Text>Ipfs Address</Text><TextInput defaultValue={this.state.ipfs.toString()} onChangeText={(ipfs) => this.setState({ipfs})}/></View>
         }
       <Button
         title="Select Floormap"
         onPress={__this._pickImage.bind(__this)}
       />
       { this.state.image_uri && <Image source={{ uri: this.state.image_uri }} style={{ width: 200, height: 200 }} />}
-      {this.state.image_uri && this.state.editorType=="add" ? <Button title="Proceed" onPress={()=>__this.add_floormap()}/>:null}
-      {this.state.image_uri && this.state.editorType=="edit" ? <Button title="Proceed" onPress={()=>__this.edit_floormap()}/>:null}
+      {this.state.image_uri && this.state.editorType=="add" ? <Button title="Proceed to add" onPress={()=>__this.add_floormap()}/>:null}
+      {this.state.image_uri && this.state.editorType=="edit" ? <Button title="Proceed to edit" onPress={()=>__this.edit_floormap()}/>:null}
       <Button title="close" onPress={()=>__this.setState({editorVisible:false,desc:null,cubes:[],image_uri:null})} />
     </View>)
   }
@@ -195,7 +245,7 @@ export default class FloorplanUp extends Component {
     const floormap_editor  = this.floormap_editor();
     const floormap_remover = this.floormap_remover();
     return (
-      <View>
+      <ScrollView vertical={true}>
         <table>
           <tbody>
           {floormap_selection2}
@@ -208,7 +258,7 @@ export default class FloorplanUp extends Component {
         <Modal visible={this.state.removerVisible} key="remover" ariaHideApp={false}>
           {floormap_remover}
         </Modal>
-        </View>
+        </ScrollView>
     )
   }
 }
