@@ -9,7 +9,7 @@ import SettingsScreen from '../screens/SettingsScreen';
 import FloorplanUp from '../screens/merchant/FloorplanUp';
 import FloorplanEditor from '../screens/merchant/FloorplanEditor';
 import FoodMenuUp from '../screens/merchant/FoodMenuUp';
-import Profile from '../screens/merchant/Profile';
+import Profile from '../screens/Profile';
 const config = Platform.select({
   web: { headerMode: 'screen' },
   default: {},

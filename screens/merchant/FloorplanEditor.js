@@ -43,6 +43,7 @@ export default class FloorplanEditor extends React.Component {
   constructor(props){
      super(props)
      //jj();
+     this.address = props.navigation.getParam("address","")
      this.image = props.navigation.getParam("image","hi")
      this.image_uri = props.navigation.getParam("image_uri",
      require("../../assets/images/IMG20190914110954.jpg"));
@@ -95,6 +96,7 @@ export default class FloorplanEditor extends React.Component {
   save_map(){
     console.log("h")
     const signer = issuer.address;
+    const address = this.address;
     const image = this.image;
     const desc = this.desc;
     const ipfs = this.ipfs;
@@ -103,7 +105,7 @@ export default class FloorplanEditor extends React.Component {
     console.log("desc",desc);
     console.log("ipfs",ipfs);
     console.log("fo",this.state.cubes);
-    attestation.tx("addFloorplan",[signer,this.state.cubes,desc,image,ipfs]).then(function(){})
+    attestation.tx("addFloorplan",[signer,address,this.state.cubes,desc,image,ipfs]).then(function(){})
 
   }
   query_map(){

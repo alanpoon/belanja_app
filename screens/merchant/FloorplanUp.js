@@ -14,6 +14,7 @@ const hexToString = str =>u8aToString(hexToU8a(str.toHex())).substr(1);
 const default_ipfs = "127.0.0.1:5001";
 export default class FloorplanUp extends Component {
   state = {
+    address:null,
     image: null,
     advance_setting:1,
     ipfs:default_ipfs,
@@ -34,9 +35,10 @@ export default class FloorplanUp extends Component {
   }
 
   proceed(floormap_id){ //before putting creating floorplan
-    var image,desc,ipfs,cubes,image_uri;
+    var address,image,desc,ipfs,cubes,image_uri;
     for (var i=0;i<this.state.floormap_items.length;i++){
       if(this.state.floormap_items[i]['id']==floormap_id){
+        address=this.state.floormap_items[i]['address'];
         image=this.state.floormap_items[i]['image'];
         desc=this.state.floormap_items[i]['desc'];
         ipfs = this.state.floormap_items[i]['ipfs'];
@@ -45,6 +47,7 @@ export default class FloorplanUp extends Component {
       }
     }
     this.props.navigation.navigate('FloorplanEditor', {
+      address:address,
       cubes: cubes,
       ipfs: ipfs,
       desc:desc,
@@ -53,7 +56,7 @@ export default class FloorplanUp extends Component {
     })
   }
   add(){
-    this.setState({editorVisible:true,editorType:"add",desc:"Location A",image:null,ipfs:default_ipfs,cubes:[],image_uri:null})
+    this.setState({editorVisible:true,editorType:"add",address:null,desc:"Location A",image:null,ipfs:default_ipfs,cubes:[],image_uri:null})
   }
   remove(floormap_id){
     console.log("floormap_id_arr",this.state.floormapIds_arr,"floormap_id",floormap_id)
@@ -67,9 +70,10 @@ export default class FloorplanUp extends Component {
     this.setState({removerVisible:true,desc,selected_floormap_id:floormap_id})
   }
   edit(floormap_id){
-    var image,desc,ipfs,cubes,image_uri;
+    var address,image,desc,ipfs,cubes,image_uri;
     for (var i=0;i<this.state.floormap_items.length;i++){
       if(this.state.floormap_items[i].id==floormap_id){
+        address=this.state.floormap_items[i]['address'];
         image=this.state.floormap_items[i]['image'];
         desc=this.state.floormap_items[i]['desc'];
         ipfs = this.state.floormap_items[i]['ipfs'];
@@ -78,22 +82,22 @@ export default class FloorplanUp extends Component {
       }
     }
 
-    this.setState({editorVisible:true,editorType:"edit",image,desc,ipfs,cubes,image_uri,selected_floormap_id:floormap_id})
+    this.setState({editorVisible:true,editorType:"edit",address,image,desc,ipfs,cubes,image_uri,selected_floormap_id:floormap_id})
   }
 
   add_floormap(){
     const signer = issuer.address;
-    const {desc,image,ipfs} = this.state;
+    const {address,desc,image,ipfs} = this.state;
     const __this =this;
-    attestation.tx("addFloorplan",[signer,[],desc,image,ipfs]).then(function(){
+    attestation.tx("addFloorplan",[signer,address,[],desc,image,ipfs]).then(function(){
       __this.refresh();
     })
   }
   edit_floormap(){
     const signer = issuer.address;
-    const {desc,image,ipfs,selected_floormap_id} = this.state;
+    const {address,desc,image,ipfs,selected_floormap_id} = this.state;
     const __this =this;
-    attestation.tx("changeFloorplan",[signer,selected_floormap_id,[],desc,image,ipfs]).then(function(){
+    attestation.tx("changeFloorplan",[signer,selected_floormap_id,[],address,desc,image,ipfs]).then(function(){
       __this.refresh();
     })
   }
@@ -121,6 +125,7 @@ export default class FloorplanUp extends Component {
           if (k.isSome ==true){
             let j = k.unwrap();
             let m ={
+              address:j.address,
               cubes:j.cubes,
               image:hexToString(j.image),
               ipfs:hexToString(j.ipfs),
@@ -232,7 +237,7 @@ export default class FloorplanUp extends Component {
     console.log("floormap_items",floormap_items)
     for (let i=0;i<floormap_items.length;i++){
       floormap_selection2.push(<tr key={i}>
-        <td><Text>{floormap_items[i].desc}</Text></td>
+        <td><Text>{floormap_items[i].desc}</Text><br/><Text>{floormap_items[i]["address"]}</Text></td>
         <td><Image
             style={{width:100, height: 100}}
             source={{uri:floormap_items[i]["image_uri"]}}
