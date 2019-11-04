@@ -13,8 +13,8 @@
     "preset": "jest-expo"
   },
   "resolutions": {
-    "crypto": "file:../crypto",
-    "stream": "file:../react-native-stream"
+    "crypto": "file:crypto",
+    "stream": "file:react-native-stream"
   },
   "dependencies": {
     "@cennznet/api": "^0.15.1",
