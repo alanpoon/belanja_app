@@ -13,79 +13,11 @@ import {
 
 import { MonoText } from '../components/StyledText';
 import jj from '../cennzapp'
-import ReactGoogleMapLoader from "react-google-maps-loader";
-import ReactGooglePlacesSuggest from "react-google-places-suggest";
+import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
 import { REACT_APP_GOOGLE_API_KEY } from 'react-native-dotenv';
 const MY_API_KEY = REACT_APP_GOOGLE_API_KEY;
 console.log(MY_API_KEY);
-class GoogleSuggest extends React.Component {
-  state = {
-      search: "",
-      value: "",
-  }
 
-  handleInputChange = e => {
-      this.setState({search: e.target.value, value: e.target.value})
-  }
-
-  handleSelectSuggest = (geocodedPrediction, originalPrediction) => {
-      console.log(geocodedPrediction, originalPrediction) // eslint-disable-line
-      this.setState({search: "", value: geocodedPrediction.formatted_address})
-  }
-  
-  handleNoResult = () => {
-      console.log('No results for ', this.state.search)
-  }
-
-  handleStatusUpdate = (status) => {
-      console.log(status)
-  }
-
-  render() {
-      const {search, value} = this.state
-      return (
-          <ReactGoogleMapLoader
-              params={{
-                  key: MY_API_KEY,
-                  libraries: "places,geocode",
-              }}
-              render={googleMaps =>
-                  googleMaps && (
-                      <ReactGooglePlacesSuggest
-                          googleMaps={googleMaps}
-                          autocompletionRequest={{
-                              input: search,
-                              componentRestrictions:{country:"sg"}
-                              // Optional options
-                              // https://developers.google.com/maps/documentation/javascript/reference?hl=fr#AutocompletionRequest
-                          }}
-                          // Optional props
-                          
-                          onNoResult={this.handleNoResult}
-                          onSelectSuggest={this.handleSelectSuggest}
-                          onStatusUpdate={this.handleStatusUpdate}
-                          textNoResults="My custom no results text" // null or "" if you want to disable the no results item
-                          customRender={prediction => (
-                              <div className="customWrapper">
-                                  {prediction
-                                      ? prediction.description
-                                      : "My custom no results text"}
-                              </div>
-                          )}
-                      >
-                          <input
-                              type="text"
-                              value={value}
-                              placeholder="Search a location"
-                              onChange={this.handleInputChange}
-                          />
-                      </ReactGooglePlacesSuggest>
-                  )
-              }
-          />
-      )
-  }
-}
 export default function HomeScreen(props) {
   //jj();
   return (
@@ -93,8 +25,65 @@ export default function HomeScreen(props) {
       <ScrollView
         style={styles.container}
         contentContainerStyle={styles.contentContainer}>
-          <GoogleSuggest/>
         <View style={styles.welcomeContainer}>
+        <GooglePlacesAutocomplete
+      placeholder='Search'
+      minLength={2} // minimum length of text to search
+      autoFocus={false}
+      returnKeyType={'search'} // Can be left out for default return key https://facebook.github.io/react-native/docs/textinput.html#returnkeytype
+      keyboardAppearance={'light'} // Can be left out for default keyboardAppearance https://facebook.github.io/react-native/docs/textinput.html#keyboardappearance
+      listViewDisplayed='auto'    // true/false/undefined
+      fetchDetails={true}
+      renderDescription={row => row.description} // custom description render
+      onPress={(data, details = null) => { // 'details' is provided when fetchDetails = true
+        //console.log(data, details);
+        console.log("data:",data['place_id']);
+        console.log("desc:",data["description"]);
+      }}
+
+      getDefaultValue={() => ''}
+
+      query={{
+        // available options: https://developers.google.com/places/web-service/autocomplete
+        key: MY_API_KEY,
+        components: 'country:sg',
+        language: 'en' // language of the results
+        // default: 'geocode'
+      }}
+
+      styles={{
+        textInputContainer: {
+          width: '100%'
+        },
+        description: {
+          fontWeight: 'bold'
+        },
+        predefinedPlacesDescription: {
+          color: '#1faadb'
+        }
+      }}
+
+      currentLocation={true} // Will add a 'Current location' button at the top of the predefined places list
+      currentLocationLabel="Current location"
+      nearbyPlacesAPI='GooglePlacesSearch' // Which API to use: GoogleReverseGeocoding or GooglePlacesSearch
+      GoogleReverseGeocodingQuery={{
+        // available options for GoogleReverseGeocoding API : https://developers.google.com/maps/documentation/geocoding/intro
+      }}
+      GooglePlacesSearchQuery={{
+        // available options for GooglePlacesSearch API : https://developers.google.com/places/web-service/search
+        rankby: 'distance',
+        type: 'cafe'
+      }}
+      
+      GooglePlacesDetailsQuery={{
+        // available options for GooglePlacesDetails API : https://developers.google.com/places/web-service/details
+        fields: 'formatted_address',
+      }}
+
+      filterReverseGeocodingByTypes={['locality', 'administrative_area_level_3']} // filter the reverse geocoding results by types - ['locality', 'administrative_area_level_3'] if you want to display only cities
+
+      debounce={200} // debounce the requests in ms. Set to 0 to remove debounce. By default 0ms.
+    />
           <Image
             source={
               __DEV__

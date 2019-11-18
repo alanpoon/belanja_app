@@ -4,7 +4,9 @@ import React from 'react';
 import { View, TextInput, KeyboardAvoidingView } from 'react-native';
 import 'three';
 import TextMesh from './TextMesh';
+
 /// To make fonts use this -> https://gero3.github.io/facetype.js/
+
 
 export default class App extends React.Component {
   componentWillMount() {
@@ -13,6 +15,7 @@ export default class App extends React.Component {
   render() {
     return (
       <View style={{ flex: 1 }}>
+        
         <KeyboardAvoidingView
           behavior={'padding'}
           style={{ height: '100%', flex: 1 }}>
@@ -23,6 +26,7 @@ export default class App extends React.Component {
             onResize={this.onResize}
             arEnabled={false}
           />
+
           <TextInput
             style={{
               height: 40,
