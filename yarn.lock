@@ -3022,7 +3022,7 @@ cross-spawn@^6.0.0, cross-spawn@^6.0.5:
     shebang-command "^1.2.0"
     which "^1.2.9"
 
-"crypto@file:../crypto":
+"crypto@file:crypto":
   version "1.0.0"
   dependencies:
     expo-random "^6.0.0"
@@ -9006,6 +9006,12 @@ stream-shift@^1.0.0:
   integrity sha1-1cdSgl5TZ+eG944Y5EXqIjoVWVI=
 
 "stream@file:../react-native-stream":
+  version "0.1.9"
+  dependencies:
+    base64-js "^1.2.0"
+    ieee754 "^1.1.8"
+
+"stream@file:react-native-stream":
   version "0.1.9"
   dependencies:
     base64-js "^1.2.0"
