@@ -1,10 +1,10 @@
 import React from 'react';
-import styled from 'styled-components';
+import styled from 'styled-components/native';
 import {Button} from 'react-native';
 import { formatBalance } from '@cennznet/util';
 import { assetRegistry } from '@cennznet/crml-generic-asset';
 import attestation from '../cennzapp/utils/attestation';
-const Wrapper = styled.div`
+const Wrapper = styled.View`
   border: 2px solid #eee;
   border-radius: 8px;
   margin: 10px;
@@ -12,7 +12,7 @@ const Wrapper = styled.div`
   overflow: hidden;
 `;
 
-const ItemImageWrapper = styled.div`
+const ItemImageWrapper = styled.View`
   height: 180px;
   line-height: 100px;
   text-align: center;
@@ -23,7 +23,7 @@ const ItemImageWrapper = styled.div`
   }
 `;
 
-const ItemDescWrapper = styled.div`
+const ItemDescWrapper = styled.View`
   padding: 10px;
 `;
 
