@@ -1,31 +1,9 @@
 import React from 'react';
-import styled from 'styled-components/native';
 import {Button} from 'react-native';
 import { formatBalance } from '@cennznet/util';
 import { assetRegistry } from '@cennznet/crml-generic-asset';
 import attestation from '../cennzapp/utils/attestation';
-const Wrapper = styled.View`
-  border: 2px solid #eee;
-  border-radius: 8px;
-  margin: 10px;
-  width: 280px;
-  overflow: hidden;
-`;
-
-const ItemImageWrapper = styled.View`
-  height: 180px;
-  line-height: 100px;
-  text-align: center;
-
-  img {
-    height: 100%;
-    width: 100%;
-  }
-`;
-
-const ItemDescWrapper = styled.View`
-  padding: 10px;
-`;
+import {ItemImageWrapper,ItemDescWrapper} from './screen_styles';
 
 export default class ItemCard extends React.Component {
   constructor(props){

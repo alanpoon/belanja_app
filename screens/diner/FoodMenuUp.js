@@ -1,5 +1,4 @@
 import React, {Component} from "react";
-import styled from "styled-components";
 import {Button, View,Image,Picker,Text,TextInput} from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
 import * as Utils from '../../utils';
@@ -7,14 +6,6 @@ import ItemCard from '../ItemCard';
 
 //import { TextInput } from "react-native-gesture-handler";
 //
-const ActionWrapper = styled.div`
-  margin-top: 10px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid #e4e4e4;
-  h2 {
-    display: inline-block;
-  }
-`;
 export default class FloorplanUp extends Component {
   state = {
     

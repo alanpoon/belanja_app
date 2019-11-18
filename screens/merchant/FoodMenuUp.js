@@ -6,21 +6,14 @@ import ItemCard from '../ItemCard';
 import attestation from "../../cennzapp/utils/attestation";
 import {issuer} from "../../cennzapp/utils/cennnznet";
 import BN from 'bn.js';
-import styled from "styled-components/native";
+import {ActionWrapper} from '../screen_styles';
 //import { TextInput } from "react-native-gesture-handler";
 //
 import { u8aToHex, stringToU8a,hexToU8a, isHex,u8aToString } from '@cennznet/util';
 const stringToHex = str => u8aToHex(stringToU8a(str));
 const hexToString = str =>u8aToString(hexToU8a(str.toHex())).substr(1);
 
-const ActionWrapper = styled.View`
-  margin-top: 10px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid #e4e4e4;
-  h2 {
-    display: inline-block;
-  }
-`;
+
 
 export default class FloorMenuUp extends Component {
   state = {
