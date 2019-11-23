@@ -30,11 +30,11 @@ Google places and Map encoding API:
 - [ ] Fix query button
 
 ### Screenshots
-![Floorplanmanager](https://raw.githubusercontent.com/alanpoon/belanja_app/master/floorplanmanager.png)
+![Floorplanmanager](https://raw.githubusercontent.com/alanpoon/belanja_app/master/screenshots/floorplanmanager.png)
 * ^Add new floorplan
-![Floorplaneditor](https://raw.githubusercontent.com/alanpoon/belanja_app/master/floorplaneditor.png)
+![Floorplaneditor](https://raw.githubusercontent.com/alanpoon/belanja_app/master/screenshots/floorplaneditor.png)
 * ^Edit and save the position of the tables. Query button to query the unbilled food items on the table
-![Food_menu_creation](https://raw.githubusercontent.com/alanpoon/belanja_app/master/addbottle.png =200x200)
+![Food_menu_creation](https://raw.githubusercontent.com/alanpoon/belanja_app/master/screenshots/addbottle.png =200x200)
 * ^Create a bottle of water and set the price
-![Allocation of item](https://raw.githubusercontent.com/alanpoon/belanja_app/master/additem.png =200x200)
+![Allocation of item](https://raw.githubusercontent.com/alanpoon/belanja_app/master/screenshots/additem.png =200x200)
 * ^Add the item to diner
