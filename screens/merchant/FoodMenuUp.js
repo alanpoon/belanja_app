@@ -134,7 +134,7 @@ export default class FloorMenuUp extends Component {
   }
   addItem(){
     const {itemId,floormapitemid} =this.state.add;
-    attestation.tx("addItem",[itemId,floormapitemid]).then(function(){})
+    attestation.tx("addItem",[itemId,floormapitemid,1]).then(function(){})
   }
   removeItem(){
     const {itemId,floormapitemid} = this.state.remove;
@@ -160,9 +160,9 @@ export default class FloorMenuUp extends Component {
       );
     }
     
-    for (let i =0; i<floormapIds_arr.length; ++i){
+    for (let i =0; i<floormaps_arr.length; ++i){
       floormapPicker.push(
-        <Picker.Item key={i} label={floormapIds_arr[i].desc} value={floormapIds_arr[i][1]}/>
+        <Picker.Item key={i} label={floormaps_arr[i].desc} value={floormaps_arr[i][1]}/>
       )
     }
     const __this = this;
