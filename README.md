@@ -32,9 +32,12 @@ Google places and Map encoding API:
 ### Screenshots
 ![Floorplanmanager](https://raw.githubusercontent.com/alanpoon/belanja_app/master/screenshots/floorplanmanager.png)
 * ^Add new floorplan
+
 ![Floorplaneditor](https://raw.githubusercontent.com/alanpoon/belanja_app/master/screenshots/floorplaneditor.png)
+
 * ^Edit and save the position of the tables. Query button to query the unbilled food items on the table
-![Food_menu_creation](https://raw.githubusercontent.com/alanpoon/belanja_app/master/screenshots/addbottle.png =200x200)
+![Food_menu_creation](https://raw.githubusercontent.com/alanpoon/belanja_app/master/screenshots/addbottle.png)
+
 * ^Create a bottle of water and set the price
-![Allocation of item](https://raw.githubusercontent.com/alanpoon/belanja_app/master/screenshots/additem.png =200x200)
+![Allocation_of_item](https://raw.githubusercontent.com/alanpoon/belanja_app/master/screenshots/additem.png)
 * ^Add the item to diner
