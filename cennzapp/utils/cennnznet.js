@@ -16,7 +16,8 @@
 
 import { Wallet, SimpleKeyring } from '@cennznet/wallet';
 import { hexToU8a, u8aToHex,stringToU8a } from '@cennznet/util';
-import { WsProvider } from '@cennznet/api/polkadot';
+import { WsProvider} from '@polkadot/rpc-provider';
+
 import { Api } from '@cennznet/api';
 //import { waitReady } from '@plugnet/wasm-crypto';
 import network from './network';
@@ -66,7 +67,7 @@ const CustomTypes = {
   },
   'Floorplan':{
     'address':'Vec<u8>',
-    'cubes':'Vec<(usize,i16,i16,i16)>',
+    'cubes':'Vec<(u8,i16,i16,i16)>',
     'desc':'Vec<u8>',
     'image':'Vec<u8>',
     'ipfs':'Vec<u8>'
@@ -75,8 +76,13 @@ const CustomTypes = {
     'desc':'Vec<u8>',
     'image':'Vec<u8>',
     'ipfs': 'Vec<u8>'
-
-  }
+  },
+  'Profile':{
+    'profile_name': 'Vec<u8>',
+	  'image': 'Vec<u8>',
+	  'ipfs': 'Vec<u8>'
+  },
+  'RewardBalance':'Balance'
 };
 const createApi = async () => {
   if (attestationApi) return attestationApi;

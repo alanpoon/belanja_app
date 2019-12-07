@@ -1,0 +1,34 @@
+[package]
+name = "rust"
+version = "0.1.0"
+authors = ["alanpoon <brightshadowx@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+substrate-api-client ={path="../../substrate-api-client"}
+wasm-bindgen = "=0.2.55"
+
+[dependencies.keyring]
+git = 'https://github.com/paritytech/substrate'
+rev = 'f17d023bbe179f15678ac9989f471c9b18917e17'
+package = "substrate-keyring"
+
+[dependencies.primitives]
+path = "../../substrate-api-client/primitives"
+default-features=false
+package = "substrate-primitives"
+
+#[patch."https://github.com/paritytech/substrate"]
+#substrate-primitives = { package = "substrate-primitives", path = "../../substrate-api-client/primitives", default-features = false }
+
+[patch.crates-io]
+ed25519-dalek = { git="https://github.com/alanpoon/ed25519-dalek", branch="master"}
+
+[lib]
+crate-type = ["cdylib"]
+
+[features]
+default = ["std"]
+std = [
+	"primitives/std"
+]

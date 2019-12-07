@@ -1,6 +1,15 @@
 import * as WebBrowser from 'expo-web-browser';
 import React from 'react';
 import {Button} from 'react-native';
+//import("./dist/native").catch(console.error);
+//import("./dist/native").then(module=>{
+//import("./rust/pkg").then(module=>{
+ // console.log("j",module.runz());
+//});
+/*
+init('./dist/native_bg.wasm').then(module=>{
+  console.log(module.runz())
+})*/
 import {
   Image,
   Platform,
@@ -16,6 +25,7 @@ import jj from '../cennzapp'
 import ReactGoogleMapLoader from "react-google-maps-loader";
 import ReactGooglePlacesSuggest from "react-google-places-suggest";
 import { REACT_APP_GOOGLE_API_KEY } from 'react-native-dotenv';
+import WasmComponent from './WasmComponent';
 const MY_API_KEY = REACT_APP_GOOGLE_API_KEY;
 console.log(MY_API_KEY);
 class GoogleSuggest extends React.Component {
@@ -44,6 +54,7 @@ class GoogleSuggest extends React.Component {
   render() {
       const {search, value} = this.state
       return (
+          
           <ReactGoogleMapLoader
               params={{
                   key: MY_API_KEY,
@@ -87,12 +98,13 @@ class GoogleSuggest extends React.Component {
   }
 }
 export default function HomeScreen(props) {
-  //jj();
+
   return (
     <View style={styles.container}>
       <ScrollView
         style={styles.container}
         contentContainerStyle={styles.contentContainer}>
+          <WasmComponent/>
           <GoogleSuggest/>
         <View style={styles.welcomeContainer}>
           <Image
