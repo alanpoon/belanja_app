@@ -6,13 +6,13 @@ use substrate_api_client::{
     Api,
 };
 #[wasm_bindgen]
-pub fn k(url:&str)->String{
+pub async fn k(url:String)->String{
     //let signer = AccountKeyring::Alice.pair();
-    let mut api:Api<Pair> = Api::new(format!("ws://{}", url));
+    let mut api:Api<Pair> = Api::new(format!("ws://{}", url)).await;
     // get some plain storage value
-    let result_str = api.get_storage("Balances", "TotalIssuance", None).unwrap();
-    //let result = hexstr_to_u256(result_str).unwrap();
-    result_str
+    let result_str = api.get_storage("Balances", "TotalIssuance", None).await.unwrap();
+    let result = hexstr_to_u256(result_str).unwrap();
+    result
 }
 
 #[wasm_bindgen]

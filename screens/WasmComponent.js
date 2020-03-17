@@ -22,8 +22,8 @@ const WasmComponent = () => {
   const callFetch = async (wasm) => {
     console.log('calling fetch');
     //const res =  await wasm.greet("jj");
-    const resy =  await wasm.k("127.0.0.1:9444");
-    console.log(resy);
+    const resy =  await wasm.k("127.0.0.1:9944");
+    console.log("HHHHHHHHHHHHHHHHHH",resy);
   }
 /*
   // load wasm asynchronously
